@@ -175,6 +175,13 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
 .score-input.auto-filled{color:#185FA5;background:#E6F1FB;border-color:#185FA5}
 @media print{.conclusion-panel{break-inside:avoid}.conclusion-body{display:block!important}.conclusion-panel{border:1.5px solid #333!important;border-radius:0!important}}
 
+/* Import banner responsive */
+@media(max-width:600px){
+  #importBanner{flex-direction:column;align-items:stretch;text-align:center;padding:10px 12px}
+  #importBanner>div{width:100%}
+  #importBanner button{font-size:11px!important;padding:6px 10px!important}
+}
+
 /* Print settings panel */
 .print-panel{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:950;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
 .print-panel.open{display:flex}
@@ -192,6 +199,7 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
 .print-mode-btns .btn{flex:1;text-align:center}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -208,6 +216,7 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
     <button class="btn btn-primary" onclick="saveRecord()">保存记录</button>
     <button class="btn btn-primary" onclick="generateConclusion();document.getElementById('conclusionBody').classList.add('open');document.getElementById('conclusionToggle').textContent='点击收起 ▴';document.getElementById('conclusionPanel').scrollIntoView({behavior:'smooth'})">📊 生成评价</button>
     <button class="btn btn-outline" onclick="showRecords()">查看记录</button>
+    <button class="btn btn-outline" onclick="shareToDesktop()" id="btnShareDesktop" style="display:none" title="将填写的数据生成链接，在电脑端打开后可直接保存到记录">📤 发送给电脑</button>
     <button class="btn btn-outline" onclick="exportRecords()">📤 导出</button>
     <button class="btn btn-outline" onclick="document.getElementById('importFileInput').click()">📥 导入</button>
     <button class="btn btn-outline" onclick="resetForm()">清空</button>
@@ -299,7 +308,7 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
         <span class="write-lbl">通勤约</span><input class="write write-narrow" id="s_work_time" type="number" placeholder="--">
         <span class="write-lbl">分钟</span>
         <span class="write-lbl">方式</span>
-        <select class="sel" id="s_work_way"><option>地铁</option><option>公交</option><option>开车</option><option>骑行</option></select>
+        <select class="sel" id="s_work_way"><option>地铁</option><option>公交</option><option>开车</option><option>骑行</option><option>步行</option></select>
       </div>
       <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_work_sc" id="s_work_sc" placeholder="-"></div>
     </div>
@@ -1988,6 +1997,313 @@ function importRecords(event){
   reader.readAsText(file);
   event.target.value = '';
 }
+
+// ============================================================
+// MOBILE DETECTION & SHARE TO DESKTOP
+// 手机扫码打开后localStorage与电脑端不共享，需要通过链接传递数据
+// ============================================================
+function isMobileDevice() {
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+// Show "发送给电脑" button on mobile
+if(isMobileDevice()) {
+  const btn = document.getElementById('btnShareDesktop');
+  if(btn) btn.style.display = '';
+}
+
+// Collect all form data for sharing
+function collectFormData() {
+  const data = {
+    name: getVal('f_name'), date: getVal('f_date'), addr: getVal('f_addr'),
+    rent: getVal('f_rent'), deposit: getVal('f_deposit'), type: getVal('f_type'),
+    floor: getVal('f_floor'), area: getVal('f_area'),
+    overall: parseInt(getVal('f_overall'))||0,
+    notes: getVal('f_notes'),
+    scores: collectScores(),
+    utilEstimate: window._utilEstimate || null,
+    conclusionHtml: document.getElementById('conclusionContent').innerHTML,
+    fields: {
+      s_subway:getVal('s_subway'),s_subway_walk:getVal('s_subway_walk'),
+      s_work_dist:getVal('s_work_dist'),s_work_time:getVal('s_work_time'),s_work_way:getVal('s_work_way'),
+      s_bus:getVal('s_bus'),s_bus_3min:getCK('s_bus_3min'),s_bus_10min:getCK('s_bus_10min'),
+      s_elec:getVal('s_elec'),s_elec_type:getVal('s_elec_type'),s_elec_est:getVal('s_elec_est'),
+      s_water:getVal('s_water'),s_water_meter:getVal('s_water_meter'),
+      s_gas:getVal('s_gas'),s_gas_price:getVal('s_gas_price'),
+      s_net_isp:getVal('s_net_isp'),s_net_speed:getVal('s_net_speed'),s_net_fee:getVal('s_net_fee'),s_net_share:getVal('s_net_share'),
+      s_city:getVal('s_city'),
+      s_dir:getVal('s_dir'),s_light:getVal('s_light'),
+      n_street:getCK('n_street'),n_market:getCK('n_market'),n_school:getCK('n_school'),n_build:getCK('n_build'),n_elevator:getCK('n_elevator'),n_bar:getCK('n_bar'),
+      s_wall:getVal('s_wall'),s_upstairs:getVal('s_upstairs'),s_wind:getVal('s_wind'),
+      safe_mold:getCK('safe_mold'),safe_water:getCK('safe_water'),safe_drain:getCK('safe_drain'),safe_leak:getCK('safe_leak'),safe_ok:getCK('safe_ok'),
+      safe_wire:getCK('safe_wire'),safe_smoke:getCK('safe_smoke'),safe_exit:getCK('safe_exit'),safe_eleok:getCK('safe_eleok'),
+      pest_bug:getCK('pest_bug'),pest_smell:getCK('pest_smell'),pest_ok:getCK('pest_ok'),
+      s_lock:getVal('s_lock'),s_intercom:getCK('s_intercom'),
+      s_hw:getVal('s_hw'),s_hw_vol:getVal('s_hw_vol'),s_hw_time:getVal('s_hw_time'),
+      s_signal:getVal('s_signal'),
+      s_ac:getCK('s_ac'),s_ac_count:getVal('s_ac_count'),s_heat:getVal('s_heat'),
+      s_bath_window:getCK('s_bath_window'),s_bath_dry:getCK('s_bath_dry'),s_bath_count:getVal('s_bath_count'),
+      s_closet:getCK('s_closet'),s_storage:getCK('s_storage'),
+      fur_fridge:getCK('fur_fridge'),fur_washer:getCK('fur_washer'),fur_tv:getCK('fur_tv'),fur_microwave:getCK('fur_microwave'),fur_oven:getCK('fur_oven'),fur_purifier:getCK('fur_purifier'),fur_aclean:getCK('fur_aclean'),fur_dryer:getCK('fur_dryer'),
+      fur_stove:getCK('fur_stove'),fur_hood:getCK('fur_hood'),fur_rice:getCK('fur_rice'),fur_kettle:getCK('fur_kettle'),
+      fur_bed:getCK('fur_bed'),fur_mattress:getCK('fur_mattress'),fur_sofa:getCK('fur_sofa'),fur_desk:getCK('fur_desk'),fur_chair:getCK('fur_chair'),fur_wardrobe:getCK('fur_wardrobe'),fur_shoe:getCK('fur_shoe'),fur_cabinet:getCK('fur_cabinet'),fur_curtain:getCK('fur_curtain'),fur_mirror:getCK('fur_mirror'),
+      fur_wifi:getCK('fur_wifi'),fur_iron:getCK('fur_iron'),fur_vacuum:getCK('fur_vacuum'),fur_apt:getCK('fur_apt'),fur_balcony:getCK('fur_balcony'),fur_exhaust:getCK('fur_exhaust'),
+      s_prop:getVal('s_prop'),s_prop_fee:getVal('s_prop_fee'),
+      s_inc_prop:getVal('s_inc_prop'),s_inc_net:getVal('s_inc_net'),s_inc_extra:getVal('s_inc_extra'),
+      s_bill:getVal('s_bill'),s_bill_check:getCK('s_bill_check'),
+      s_ll_easy:getCK('s_ll_easy'),s_ll_visit:getCK('s_ll_visit'),s_ll_repair:getCK('s_ll_repair'),s_ll_photo:getCK('s_ll_photo'),
+      s_ret_normal:getCK('s_ret_normal'),s_ret_clean:getCK('s_ret_clean'),s_ret_trans:getCK('s_ret_trans'),s_ret_note:getVal('s_ret_note'),
+    }
+  };
+  return data;
+}
+
+// Generate share link and show share dialog
+function shareToDesktop() {
+  const name = getVal('f_name').trim();
+  if(!name) { showToast('请至少填写房源名称'); return; }
+
+  const data = collectFormData();
+  // Remove photos to keep URL short (photos can't transfer via URL)
+  delete data.photos;
+
+  const jsonStr = JSON.stringify(data);
+  const compressed = LZString.compressToEncodedURIComponent(jsonStr);
+
+  // Build URL: current page URL without hash + #d=compressed_data
+  const baseUrl = window.location.href.split('#')[0];
+  const shareUrl = baseUrl + '#d=' + compressed;
+
+  // Check length limit
+  if(shareUrl.length > 8000) {
+    showToast('数据量过大，请减少填写内容后重试');
+    return;
+  }
+
+  // Show share dialog
+  showShareDialog(shareUrl, compressed);
+}
+
+function showShareDialog(url, compressed) {
+  // Create overlay dialog
+  const overlay = document.createElement('div');
+  overlay.id = 'shareOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:960;display:flex;align-items:center;justify-content:center;padding:20px 16px;overflow-y:auto';
+
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15)">
+      <div style="padding:14px 20px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:15px;font-weight:600;color:#185FA5">📤 发送给电脑保存</div>
+        <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('shareOverlay').remove()">✕</button>
+      </div>
+      <div style="padding:16px 20px;font-size:13px;color:#444;line-height:1.8">
+        <div style="background:#FFF8E8;border:1px solid #EF9F27;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#854F0B;line-height:1.6">
+          <strong>使用方法：</strong><br>
+          1. 点击下方"复制链接"按钮<br>
+          2. 通过微信文件传输助手发给电脑<br>
+          3. 在电脑浏览器打开链接<br>
+          4. 点击"导入到记录"即可保存
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;color:#888;margin-bottom:6px;font-weight:500">分享链接（${url.length} 字符）</div>
+          <textarea readonly style="width:100%;height:80px;border:0.5px solid #d0cfc5;border-radius:6px;padding:8px;font-size:11px;font-family:monospace;resize:none;color:#555;background:#f8f8f4" id="shareUrlText">${url}</textarea>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" style="flex:1" onclick="copyShareLink()">📋 复制链接</button>
+          <button class="btn btn-outline" style="flex:1" onclick="document.getElementById('shareOverlay').remove()">取消</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function copyShareLink() {
+  const textarea = document.getElementById('shareUrlText');
+  if(!textarea) return;
+  // Select all text in textarea
+  textarea.select();
+  textarea.setSelectionRange(0, 99999);
+  try {
+    const success = document.execCommand('copy');
+    if(success) {
+      showToast('链接已复制！发给电脑打开即可');
+    } else {
+      // Fallback: use clipboard API
+      navigator.clipboard.writeText(textarea.value).then(() => {
+        showToast('链接已复制！发给电脑打开即可');
+      }).catch(() => {
+        showToast('复制失败，请长按文本框手动复制');
+      });
+    }
+  } catch(e) {
+    navigator.clipboard.writeText(textarea.value).then(() => {
+      showToast('链接已复制！发给电脑打开即可');
+    }).catch(() => {
+      showToast('复制失败，请长按文本框手动复制');
+    });
+  }
+}
+
+// ============================================================
+// DETECT INCOMING SHARED DATA FROM URL HASH
+// ============================================================
+function checkIncomingShareData() {
+  const hash = window.location.hash;
+  if(!hash || !hash.startsWith('#d=')) return null;
+
+  const encoded = hash.substring(3);
+  try {
+    const jsonStr = LZString.decompressFromEncodedURIComponent(encoded);
+    if(!jsonStr) return null;
+    const data = JSON.parse(jsonStr);
+    if(!data || !data.name) return null;
+    return data;
+  } catch(e) {
+    return null;
+  }
+}
+
+function showImportBanner(data) {
+  // Create a banner at the top of the page
+  const banner = document.createElement('div');
+  banner.id = 'importBanner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#185FA5,#2d8fd5);color:#fff;padding:12px 16px;z-index:999;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.2)';
+
+  banner.innerHTML = `
+    <div style="font-size:13px;flex:1;min-width:200px">
+      <div style="font-weight:600;font-size:14px">📥 收到手机端分享的考察数据</div>
+      <div style="font-size:12px;opacity:.85;margin-top:2px">房源：<strong>${data.name}</strong>${data.date ? ' · ' + data.date : ''}${data.addr ? ' · ' + data.addr : ''}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn" style="background:#fff;color:#185FA5;font-weight:600;border:none;padding:7px 16px;border-radius:6px;font-size:12px;cursor:pointer" onclick="importSharedData()">📥 导入到记录</button>
+      <button class="btn" style="background:rgba(255,255,255,.2);color:#fff;border:none;padding:7px 16px;border-radius:6px;font-size:12px;cursor:pointer" onclick="loadSharedToForm()">📝 加载到表单</button>
+      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border:none;padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer" onclick="dismissImportBanner()">✕</button>
+    </div>
+  `;
+
+  // Add padding to body to account for fixed banner
+  document.body.style.paddingTop = '0';
+  document.querySelector('.app').style.paddingTop = '70px';
+
+  document.body.prepend(banner);
+
+  // Store data globally
+  window._sharedData = data;
+}
+
+function dismissImportBanner() {
+  const banner = document.getElementById('importBanner');
+  if(banner) banner.remove();
+  document.querySelector('.app').style.paddingTop = '';
+  // Clean URL hash
+  if(window.location.hash.startsWith('#d=')) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+}
+
+// Directly save shared data as a new record
+function importSharedData() {
+  const data = window._sharedData;
+  if(!data) return;
+
+  const record = {
+    id: Date.now(),
+    name: data.name || '',
+    date: data.date || new Date().toISOString().slice(0,10),
+    addr: data.addr || '',
+    rent: data.rent || '',
+    deposit: data.deposit || '',
+    type: data.type || '',
+    floor: data.floor || '',
+    area: data.area || '',
+    overall: data.overall || 0,
+    notes: data.notes || '',
+    photos: [],
+    scores: data.scores || {},
+    utilEstimate: data.utilEstimate || null,
+    conclusionHtml: data.conclusionHtml || '',
+    fields: data.fields || {},
+    mobileImport: true
+  };
+
+  const records = loadRecords();
+  records.unshift(record);
+  localStorage.setItem('rental_inspect', JSON.stringify(records));
+
+  showToast('已成功从手机端导入并保存！共 ' + records.length + ' 条记录');
+  dismissImportBanner();
+}
+
+// Load shared data into the form for editing
+function loadSharedToForm() {
+  const data = window._sharedData;
+  if(!data) return;
+
+  document.getElementById('f_name').value = data.name || '';
+  document.getElementById('f_date').value = data.date || '';
+  document.getElementById('f_addr').value = data.addr || '';
+  document.getElementById('f_rent').value = data.rent || '';
+  document.getElementById('f_deposit').value = data.deposit || '';
+  document.getElementById('f_type').value = data.type || '';
+  document.getElementById('f_floor').value = data.floor || '';
+  document.getElementById('f_area').value = data.area || '';
+  document.getElementById('f_notes').value = data.notes || '';
+  document.getElementById('f_overall').value = data.overall || 0;
+  ovSelect.value = data.overall || 0;
+  ovSelect.classList.toggle('filled', (data.overall||0) > 0);
+  const el = document.getElementById('overallResult');
+  if(data.overall) {
+    el.textContent = ovLabels[data.overall-1];
+    el.style.color = data.overall >= 4 ? '#3B6D11' : data.overall >= 3 ? '#854F0B' : '#A32D2D';
+  } else {
+    el.textContent = '未评分';
+    el.style.color = '#999';
+  }
+
+  // Fill fields
+  const f = data.fields || {};
+  Object.keys(f).forEach(k => {
+    const el = document.getElementById(k);
+    if(!el) return;
+    if(el.type === 'checkbox') el.checked = !!f[k];
+    else el.value = f[k] || '';
+    if(el.classList.contains('sel') && el.style.display === 'none') {
+      const nextList = el.nextElementSibling;
+      if(nextList && nextList.classList.contains('sel-tag-list')) {
+        nextList.querySelectorAll('.sel-tag').forEach(t => {
+          t.classList.toggle('sel-active', t.dataset.value === el.value);
+        });
+      }
+    }
+  });
+
+  // Fill scores
+  const sc = data.scores || {};
+  Object.keys(sc).forEach(k => {
+    const input = document.querySelector(`.score-input[data-key="${k}"]`);
+    if(!input) return;
+    input.value = sc[k] || '';
+    input.classList.toggle('filled', sc[k] >= 1 && sc[k] <= 5);
+  });
+
+  // Restore utility estimate
+  if(data.utilEstimate) window._utilEstimate = data.utilEstimate;
+
+  updateAvgScore();
+  generateConclusion();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  dismissImportBanner();
+  showToast('已加载到表单，修改后点击"保存记录"');
+}
+
+// On page load, check for incoming shared data
+(function() {
+  const sharedData = checkIncomingShareData();
+  if(sharedData) {
+    setTimeout(() => showImportBanner(sharedData), 300);
+  }
+})();
 </script>
 </body>
 </html>

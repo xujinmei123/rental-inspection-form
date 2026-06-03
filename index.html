@@ -299,7 +299,7 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
     <div class="item-row" style="background:#f5f8fc;border-radius:6px;padding:8px 12px">
       <div class="item-label">城市费率</div>
       <div class="item-content">
-        <select class="sel" id="s_city"><option value="">选择城市自动填充</option><option>北京</option><option>上海</option><option>广州</option><option>深圳</option><option>杭州</option><option>南京</option><option>苏州</option><option>成都</option><option>重庆</option><option>武汉</option><option>天津</option><option>西安</option><option>长沙</option><option>郑州</option></select>
+        <select class="sel" id="s_city"><option value="">选择城市自动填充</option><option>北京</option><option>上海</option><option>天津</option><option>重庆</option><option>广州</option><option>深圳</option><option>东莞</option><option>佛山</option><option>珠海</option><option>中山</option><option>惠州</option><option>汕头</option><option>南京</option><option>苏州</option><option>无锡</option><option>常州</option><option>南通</option><option>扬州</option><option>徐州</option><option>盐城</option><option>杭州</option><option>宁波</option><option>温州</option><option>嘉兴</option><option>绍兴</option><option>金华</option><option>成都</option><option>绵阳</option><option>德阳</option><option>宜宾</option><option>武汉</option><option>宜昌</option><option>襄阳</option><option>长沙</option><option>株洲</option><option>衡阳</option><option>福州</option><option>厦门</option><option>泉州</option><option>济南</option><option>青岛</option><option>烟台</option><option>潍坊</option><option>临沂</option><option>郑州</option><option>洛阳</option><option>开封</option><option>石家庄</option><option>保定</option><option>唐山</option><option>邯郸</option><option>沈阳</option><option>大连</option><option>鞍山</option><option>哈尔滨</option><option>长春</option><option>西安</option><option>咸阳</option><option>太原</option><option>大同</option><option>合肥</option><option>芜湖</option><option>南昌</option><option>赣州</option><option>南宁</option><option>桂林</option><option>昆明</option><option>贵阳</option><option>兰州</option><option>呼和浩特</option><option>包头</option><option>乌鲁木齐</option><option>海口</option><option>三亚</option><option>银川</option><option>西宁</option></select>
         <span class="write-lbl" style="color:#999;font-size:10px">选择后自动填入当地居民阶梯一档价格与月均用量预估</span>
       </div>
       <div class="item-score"></div>
@@ -745,21 +745,112 @@ document.querySelectorAll('.sel').forEach(sel => {
 });
 
 // ---- City utility rate auto-fill ----
+// Data source: 各城市发改委/物价局/供水供电官网公开标准 (2025-2026)
+// Some smaller cities use estimated mid-range values based on provincial averages
 const cityRates = {
+  // ===== 直辖市 =====
   '北京': {elecPrice:0.49,elecEst:180,waterPrice:5.00,gasType:'管道天然气',gasPrice:2.80,gasEst:15,netFee:79},
   '上海': {elecPrice:0.62,elecEst:200,waterPrice:3.45,gasType:'管道天然气',gasPrice:3.02,gasEst:18,netFee:89},
+  '天津': {elecPrice:0.49,elecEst:180,waterPrice:4.90,gasType:'管道天然气',gasPrice:2.86,gasEst:18,netFee:69},
+  '重庆': {elecPrice:0.52,elecEst:170,waterPrice:3.10,gasType:'管道天然气',gasPrice:2.60,gasEst:14,netFee:59},
+  // ===== 广东 =====
   '广州': {elecPrice:0.59,elecEst:220,waterPrice:2.55,gasType:'管道天然气',gasPrice:3.36,gasEst:20,netFee:79},
   '深圳': {elecPrice:0.66,elecEst:230,waterPrice:2.67,gasType:'管道天然气',gasPrice:3.41,gasEst:18,netFee:79},
-  '杭州': {elecPrice:0.54,elecEst:200,waterPrice:2.95,gasType:'管道天然气',gasPrice:3.10,gasEst:16,netFee:69},
+  '东莞': {elecPrice:0.59,elecEst:210,waterPrice:2.80,gasType:'管道天然气',gasPrice:3.36,gasEst:18,netFee:69},
+  '佛山': {elecPrice:0.59,elecEst:200,waterPrice:2.75,gasType:'管道天然气',gasPrice:3.36,gasEst:17,netFee:69},
+  '珠海': {elecPrice:0.59,elecEst:200,waterPrice:2.85,gasType:'管道天然气',gasPrice:3.36,gasEst:15,netFee:69},
+  '中山': {elecPrice:0.59,elecEst:190,waterPrice:2.70,gasType:'管道天然气',gasPrice:3.36,gasEst:16,netFee:69},
+  '惠州': {elecPrice:0.59,elecEst:200,waterPrice:2.65,gasType:'管道天然气',gasPrice:3.36,gasEst:16,netFee:69},
+  '汕头': {elecPrice:0.59,elecEst:180,waterPrice:2.60,gasType:'管道天然气',gasPrice:3.36,gasEst:15,netFee:59},
+  // ===== 江苏 =====
   '南京': {elecPrice:0.52,elecEst:190,waterPrice:3.42,gasType:'管道天然气',gasPrice:2.96,gasEst:16,netFee:69},
   '苏州': {elecPrice:0.56,elecEst:200,waterPrice:3.20,gasType:'管道天然气',gasPrice:2.98,gasEst:17,netFee:69},
+  '无锡': {elecPrice:0.52,elecEst:190,waterPrice:3.20,gasType:'管道天然气',gasPrice:2.95,gasEst:16,netFee:69},
+  '常州': {elecPrice:0.52,elecEst:180,waterPrice:3.25,gasType:'管道天然气',gasPrice:2.95,gasEst:15,netFee:69},
+  '南通': {elecPrice:0.52,elecEst:180,waterPrice:3.10,gasType:'管道天然气',gasPrice:2.75,gasEst:15,netFee:59},
+  '扬州': {elecPrice:0.52,elecEst:170,waterPrice:3.05,gasType:'管道天然气',gasPrice:2.75,gasEst:14,netFee:59},
+  '徐州': {elecPrice:0.52,elecEst:180,waterPrice:3.10,gasType:'管道天然气',gasPrice:2.75,gasEst:15,netFee:59},
+  '盐城': {elecPrice:0.52,elecEst:170,waterPrice:3.00,gasType:'管道天然气',gasPrice:2.70,gasEst:14,netFee:59},
+  // ===== 浙江 =====
+  '杭州': {elecPrice:0.54,elecEst:200,waterPrice:2.95,gasType:'管道天然气',gasPrice:3.10,gasEst:16,netFee:69},
+  '宁波': {elecPrice:0.54,elecEst:190,waterPrice:3.10,gasType:'管道天然气',gasPrice:3.05,gasEst:16,netFee:69},
+  '温州': {elecPrice:0.54,elecEst:180,waterPrice:2.90,gasType:'管道天然气',gasPrice:3.00,gasEst:15,netFee:59},
+  '嘉兴': {elecPrice:0.54,elecEst:170,waterPrice:2.85,gasType:'管道天然气',gasPrice:2.95,gasEst:14,netFee:59},
+  '绍兴': {elecPrice:0.54,elecEst:170,waterPrice:2.90,gasType:'管道天然气',gasPrice:2.95,gasEst:14,netFee:59},
+  '金华': {elecPrice:0.54,elecEst:170,waterPrice:2.85,gasType:'管道天然气',gasPrice:2.90,gasEst:14,netFee:59},
+  // ===== 四川 =====
   '成都': {elecPrice:0.52,elecEst:180,waterPrice:2.98,gasType:'管道天然气',gasPrice:2.50,gasEst:15,netFee:59},
-  '重庆': {elecPrice:0.52,elecEst:170,waterPrice:3.10,gasType:'管道天然气',gasPrice:2.60,gasEst:14,netFee:59},
+  '绵阳': {elecPrice:0.52,elecEst:170,waterPrice:2.80,gasType:'管道天然气',gasPrice:2.50,gasEst:14,netFee:49},
+  '德阳': {elecPrice:0.52,elecEst:170,waterPrice:2.80,gasType:'管道天然气',gasPrice:2.50,gasEst:14,netFee:49},
+  '宜宾': {elecPrice:0.52,elecEst:160,waterPrice:2.75,gasType:'管道天然气',gasPrice:2.50,gasEst:13,netFee:49},
+  // ===== 湖北 =====
   '武汉': {elecPrice:0.56,elecEst:190,waterPrice:2.85,gasType:'管道天然气',gasPrice:2.83,gasEst:16,netFee:69},
-  '天津': {elecPrice:0.49,elecEst:180,waterPrice:4.90,gasType:'管道天然气',gasPrice:2.86,gasEst:18,netFee:69},
-  '西安': {elecPrice:0.50,elecEst:170,waterPrice:3.80,gasType:'管道天然气',gasPrice:2.10,gasEst:14,netFee:59},
+  '宜昌': {elecPrice:0.56,elecEst:170,waterPrice:2.70,gasType:'管道天然气',gasPrice:2.80,gasEst:14,netFee:59},
+  '襄阳': {elecPrice:0.56,elecEst:170,waterPrice:2.70,gasType:'管道天然气',gasPrice:2.80,gasEst:14,netFee:59},
+  // ===== 湖南 =====
   '长沙': {elecPrice:0.56,elecEst:180,waterPrice:2.88,gasType:'管道天然气',gasPrice:2.75,gasEst:15,netFee:69},
-  '郑州': {elecPrice:0.56,elecEst:180,waterPrice:4.40,gasType:'管道天然气',gasPrice:2.58,gasEst:15,netFee:69}
+  '株洲': {elecPrice:0.56,elecEst:170,waterPrice:2.80,gasType:'管道天然气',gasPrice:2.70,gasEst:14,netFee:59},
+  '衡阳': {elecPrice:0.56,elecEst:160,waterPrice:2.70,gasType:'管道天然气',gasPrice:2.70,gasEst:13,netFee:59},
+  // ===== 福建 =====
+  '福州': {elecPrice:0.52,elecEst:180,waterPrice:2.95,gasType:'管道天然气',gasPrice:2.80,gasEst:15,netFee:69},
+  '厦门': {elecPrice:0.52,elecEst:190,waterPrice:3.10,gasType:'管道天然气',gasPrice:3.10,gasEst:16,netFee:69},
+  '泉州': {elecPrice:0.52,elecEst:170,waterPrice:2.85,gasType:'管道天然气',gasPrice:2.80,gasEst:14,netFee:59},
+  // ===== 山东 =====
+  '济南': {elecPrice:0.55,elecEst:180,waterPrice:4.20,gasType:'管道天然气',gasPrice:3.50,gasEst:17,netFee:69},
+  '青岛': {elecPrice:0.55,elecEst:190,waterPrice:3.60,gasType:'管道天然气',gasPrice:2.95,gasEst:16,netFee:69},
+  '烟台': {elecPrice:0.55,elecEst:170,waterPrice:3.30,gasType:'管道天然气',gasPrice:2.90,gasEst:15,netFee:59},
+  '潍坊': {elecPrice:0.55,elecEst:170,waterPrice:3.20,gasType:'管道天然气',gasPrice:2.85,gasEst:15,netFee:59},
+  '临沂': {elecPrice:0.55,elecEst:160,waterPrice:3.10,gasType:'管道天然气',gasPrice:2.85,gasEst:14,netFee:59},
+  // ===== 河南 =====
+  '郑州': {elecPrice:0.56,elecEst:180,waterPrice:4.40,gasType:'管道天然气',gasPrice:2.58,gasEst:15,netFee:69},
+  '洛阳': {elecPrice:0.56,elecEst:170,waterPrice:3.80,gasType:'管道天然气',gasPrice:2.58,gasEst:14,netFee:59},
+  '开封': {elecPrice:0.56,elecEst:160,waterPrice:3.60,gasType:'管道天然气',gasPrice:2.58,gasEst:13,netFee:59},
+  // ===== 河北 =====
+  '石家庄': {elecPrice:0.52,elecEst:180,waterPrice:4.20,gasType:'管道天然气',gasPrice:2.68,gasEst:16,netFee:59},
+  '保定': {elecPrice:0.52,elecEst:170,waterPrice:4.00,gasType:'管道天然气',gasPrice:2.68,gasEst:15,netFee:59},
+  '唐山': {elecPrice:0.52,elecEst:180,waterPrice:3.80,gasType:'管道天然气',gasPrice:2.68,gasEst:16,netFee:59},
+  '邯郸': {elecPrice:0.52,elecEst:170,waterPrice:3.70,gasType:'管道天然气',gasPrice:2.68,gasEst:15,netFee:59},
+  // ===== 辽宁 =====
+  '沈阳': {elecPrice:0.50,elecEst:180,waterPrice:3.10,gasType:'管道天然气',gasPrice:2.95,gasEst:18,netFee:59},
+  '大连': {elecPrice:0.50,elecEst:190,waterPrice:3.40,gasType:'管道天然气',gasPrice:3.00,gasEst:18,netFee:69},
+  '鞍山': {elecPrice:0.50,elecEst:170,waterPrice:2.90,gasType:'管道天然气',gasPrice:2.90,gasEst:16,netFee:59},
+  // ===== 黑龙江 =====
+  '哈尔滨': {elecPrice:0.51,elecEst:200,waterPrice:3.20,gasType:'管道天然气',gasPrice:2.80,gasEst:22,netFee:59},
+  // ===== 吉林 =====
+  '长春': {elecPrice:0.53,elecEst:190,waterPrice:3.50,gasType:'管道天然气',gasPrice:2.80,gasEst:20,netFee:59},
+  // ===== 陕西 =====
+  '西安': {elecPrice:0.50,elecEst:170,waterPrice:3.80,gasType:'管道天然气',gasPrice:2.10,gasEst:14,netFee:59},
+  '咸阳': {elecPrice:0.50,elecEst:160,waterPrice:3.30,gasType:'管道天然气',gasPrice:2.10,gasEst:13,netFee:49},
+  // ===== 山西 =====
+  '太原': {elecPrice:0.48,elecEst:170,waterPrice:3.80,gasType:'管道天然气',gasPrice:2.60,gasEst:16,netFee:59},
+  '大同': {elecPrice:0.48,elecEst:160,waterPrice:3.40,gasType:'管道天然气',gasPrice:2.60,gasEst:14,netFee:49},
+  // ===== 安徽 =====
+  '合肥': {elecPrice:0.57,elecEst:180,waterPrice:2.90,gasType:'管道天然气',gasPrice:2.90,gasEst:15,netFee:59},
+  '芜湖': {elecPrice:0.57,elecEst:170,waterPrice:2.70,gasType:'管道天然气',gasPrice:2.80,gasEst:14,netFee:59},
+  // ===== 江西 =====
+  '南昌': {elecPrice:0.52,elecEst:170,waterPrice:2.60,gasType:'管道天然气',gasPrice:3.00,gasEst:14,netFee:59},
+  '赣州': {elecPrice:0.52,elecEst:160,waterPrice:2.50,gasType:'管道天然气',gasPrice:2.90,gasEst:13,netFee:49},
+  // ===== 广西 =====
+  '南宁': {elecPrice:0.53,elecEst:180,waterPrice:2.80,gasType:'管道天然气',gasPrice:3.10,gasEst:16,netFee:59},
+  '桂林': {elecPrice:0.53,elecEst:160,waterPrice:2.60,gasType:'管道天然气',gasPrice:3.00,gasEst:14,netFee:49},
+  // ===== 云南 =====
+  '昆明': {elecPrice:0.50,elecEst:170,waterPrice:3.50,gasType:'管道天然气',gasPrice:2.95,gasEst:14,netFee:59},
+  // ===== 贵州 =====
+  '贵阳': {elecPrice:0.52,elecEst:170,waterPrice:3.00,gasType:'管道天然气',gasPrice:2.90,gasEst:14,netFee:59},
+  // ===== 甘肃 =====
+  '兰州': {elecPrice:0.51,elecEst:170,waterPrice:2.90,gasType:'管道天然气',gasPrice:2.50,gasEst:14,netFee:49},
+  // ===== 内蒙古 =====
+  '呼和浩特': {elecPrice:0.43,elecEst:180,waterPrice:3.50,gasType:'管道天然气',gasPrice:2.20,gasEst:18,netFee:59},
+  '包头': {elecPrice:0.43,elecEst:170,waterPrice:3.30,gasType:'管道天然气',gasPrice:2.20,gasEst:16,netFee:59},
+  // ===== 新疆 =====
+  '乌鲁木齐': {elecPrice:0.48,elecEst:180,waterPrice:2.90,gasType:'管道天然气',gasPrice:1.80,gasEst:18,netFee:49},
+  // ===== 海南 =====
+  '海口': {elecPrice:0.51,elecEst:200,waterPrice:2.60,gasType:'管道天然气',gasPrice:3.15,gasEst:10,netFee:59},
+  '三亚': {elecPrice:0.51,elecEst:200,waterPrice:3.10,gasType:'管道天然气',gasPrice:3.15,gasEst:12,netFee:69},
+  // ===== 宁夏 =====
+  '银川': {elecPrice:0.45,elecEst:180,waterPrice:2.80,gasType:'管道天然气',gasPrice:1.80,gasEst:16,netFee:49},
+  // ===== 青海 =====
+  '西宁': {elecPrice:0.38,elecEst:180,waterPrice:2.90,gasType:'管道天然气',gasPrice:1.50,gasEst:18,netFee:49}
 };
 
 function fillCityRates(city){

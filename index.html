@@ -1,0 +1,1260 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>租房实地考察评分表</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f0eb;color:#2c2c2a;font-size:13px}
+.app{max-width:900px;margin:0 auto;padding:20px 16px 40px}
+
+/* ===== Screen-only controls ===== */
+.screen-only{}
+@media print{.screen-only{display:none!important}}
+
+/* ===== Header ===== */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:20px;font-weight:600;color:#185FA5}
+.page-subtitle{font-size:12px;color:#999;margin-top:2px}
+.header-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:7px 16px;border-radius:6px;font-size:12px;cursor:pointer;border:0.5px solid #ccc;font-weight:500;transition:all .15s}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn-primary:hover{background:#0C447C}
+.btn-outline{background:#fff;color:#555}
+.btn-outline:hover{background:#f5f5f0}
+.btn-danger{background:#fff;color:#c44;border-color:#faa}
+.btn-danger:hover{background:#fff5f5}
+
+/* ===== Form Sheet ===== */
+.sheet{background:#fff;border:1px solid #d5d5cc;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.sheet-head{background:#185FA5;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.sheet-head h2{font-size:15px;font-weight:500}
+.sheet-head .sheet-badge{font-size:11px;padding:2px 8px;background:rgba(255,255,255,.2);border-radius:10px}
+
+/* Score legend */
+.score-legend{background:#fafaf7;border:0.5px solid #d5d5cc;border-radius:8px;padding:10px 16px;margin:16px 0;font-size:12px}
+.score-legend-title{font-size:12px;font-weight:600;color:#444;margin-bottom:6px}
+.legend-row{display:flex;align-items:center;gap:8px;margin-bottom:3px;line-height:1.5}
+.legend-row:last-child{margin-bottom:0}
+.legend-num{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:600;border:1.5px solid}
+.legend-num.l5{border-color:#3B6D11;color:#3B6D11;background:#EAF3DE}
+.legend-num.l4{border-color:#185FA5;color:#185FA5;background:#E6F1FB}
+.legend-num.l3{border-color:#EF9F27;color:#EF9F27;background:#FFF8E8}
+.legend-num.l2{border-color:#c44;color:#c44;background:#FEF0E0}
+.legend-num.l1{border-color:#A32D2D;color:#A32D2D;background:#FCEBEB}
+.legend-tag{font-size:10px;padding:1px 6px;border-radius:6px;font-weight:500;margin-left:auto;white-space:nowrap}
+.legend-tag.green{color:#3B6D11;background:#EAF3DE}
+.legend-tag.blue{color:#185FA5;background:#E6F1FB}
+.legend-tag.yellow{color:#854F0B;background:#FAEEDA}
+.legend-tag.red{color:#A32D2D;background:#FCEBEB}
+
+/* Info grid at top */
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid #e0dfd8}
+@media(max-width:600px){.info-grid{grid-template-columns:1fr 1fr}}
+.info-cell{padding:10px 14px;border-right:1px solid #e0dfd8;border-bottom:1px solid #e0dfd8;display:flex;flex-direction:column;gap:3px}
+.info-cell:nth-child(4n){border-right:none}
+.info-cell:nth-last-child(-n+4){border-bottom:none}
+@media(max-width:600px){.info-cell:nth-child(4n){border-right:1px solid #e0dfd8}.info-cell:nth-child(2n){border-right:none}}
+@media print{.info-grid{grid-template-columns:repeat(4,1fr)}}
+
+/* Section */
+.section{border-bottom:1px solid #e0dfd8}
+.section:last-child{border-bottom:none}
+.section-title{background:#f5f4ee;padding:8px 14px;font-size:13px;font-weight:600;color:#444;border-bottom:0.5px solid #e0dfd8;display:flex;align-items:center;gap:8px}
+.section-title .sec-num{background:#185FA5;color:#fff;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:500}
+
+/* Table-like rows */
+.item-row{display:grid;grid-template-columns:180px 1fr 90px;align-items:start;border-bottom:0.5px solid #f0efe8;padding:0}
+@media(max-width:600px){.item-row{grid-template-columns:140px 1fr 70px}}
+.item-row:last-child{border-bottom:none}
+.item-label{padding:10px 14px;font-size:12px;font-weight:500;color:#333;border-right:0.5px solid #f0efe8;white-space:pre-line}
+.item-content{padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.item-score{padding:8px 12px;border-left:0.5px solid #f0efe8;display:flex;align-items:center;justify-content:center;min-height:42px}
+
+/* Input styles */
+.write{width:70px;padding:4px 6px;border:0.5px solid #ccc;border-radius:4px;font-size:12px;text-align:center;background:#fff}
+.write:focus{outline:none;border-color:#378ADD}
+.write-wide{width:100px}
+.write-narrow{width:48px}
+.write-lbl{font-size:11px;color:#888;margin-right:2px}
+.sel{padding:4px 6px;border:0.5px solid #ccc;border-radius:4px;font-size:12px;background:#fff}
+.sel:focus{outline:none;border-color:#378ADD}
+.ck{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#555;cursor:pointer;user-select:none;white-space:nowrap}
+.ck input{margin:0}
+
+/* Tag-style select (always visible) */
+.sel-tag-list{display:flex;flex-wrap:wrap;gap:3px 6px;font-size:12px}
+.sel-tag{padding:3px 9px;border:0.5px solid #d0cfc8;border-radius:14px;font-size:11px;white-space:nowrap;cursor:pointer;transition:all .12s;color:#777;background:#fafaf7;user-select:none}
+.sel-tag:hover{border-color:#378ADD;color:#378ADD;background:#E6F1FB}
+.sel-tag.sel-active{font-weight:600;background:#FFF8E8;border-color:#EF9F27;color:#854F0B}
+.sel-tag.sel-active:hover{background:#FFF2D5}
+.sel-tag.sel-placeholder{color:#bbb;font-style:italic;cursor:default;background:transparent;border-style:dashed}
+.sel-tag.sel-placeholder:hover{border-color:#ccc;color:#bbb;background:transparent}
+
+/* Score input */
+.score-input{width:34px;height:28px;text-align:center;font-size:15px;font-weight:600;border:0.5px solid #d0cfc5;border-radius:4px;background:#fafaf7;color:#999;outline:none;transition:all .12s;font-family:inherit}
+.score-input:focus{border-color:#EF9F27;background:#FFF8E8;color:#333;box-shadow:0 0 0 2px rgba(239,159,39,.15)}
+.score-input.filled{color:#854F0B;background:#FFF8E8;border-color:#EF9F27}
+
+/* Furnish check grid */
+.furnish-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px 12px}
+@media(max-width:600px){.furnish-grid{grid-template-columns:repeat(2,1fr)}}
+@media print{.furnish-grid{grid-template-columns:repeat(4,1fr)}}
+.furnish-cat{grid-column:1/-1;font-size:11px;font-weight:600;color:#185FA5;margin-top:6px;padding:2px 0;border-bottom:0.5px dashed #d0cfc5}
+.furnish-cat:first-child{margin-top:0}
+
+/* Overall area */
+.overall-box{background:#f8f8f4;padding:14px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.overall-label{font-size:14px;font-weight:600;color:#333}
+.overall-select{padding:6px 14px;border:1px solid #d0cfc5;border-radius:6px;font-size:13px;font-weight:500;background:#fafaf7;color:#555;cursor:pointer;outline:none;transition:all .12s}
+.overall-select:focus{border-color:#EF9F27;box-shadow:0 0 0 2px rgba(239,159,39,.15)}
+.overall-select.filled{color:#854F0B;border-color:#EF9F27;background:#FFF8E8}
+.overall-result{font-size:13px;font-weight:600;min-width:60px}
+
+/* Notes */
+.notes-box{padding:12px 20px;border-top:0.5px solid #e0dfd8}
+.notes-box label{font-size:12px;color:#888;font-weight:500;display:block;margin-bottom:4px}
+textarea.notes{width:100%;padding:8px 10px;border:0.5px solid #d0cfc5;border-radius:6px;font-size:12px;resize:vertical;min-height:60px;font-family:inherit;background:#fff;color:#2c2c2a}
+textarea.notes:focus{outline:none;border-color:#378ADD}
+
+/* Photo area */
+.photo-box{padding:12px 20px;border-top:0.5px solid #e0dfd8}
+.photo-box label{font-size:12px;color:#888;font-weight:500;display:block;margin-bottom:6px}
+.photo-grid{display:flex;flex-wrap:wrap;gap:8px}
+.photo-thumb{position:relative;width:64px;height:64px;border-radius:6px;overflow:hidden;border:0.5px solid #d0cfc5}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-del{position:absolute;top:1px;right:1px;width:16px;height:16px;background:rgba(0,0,0,.55);color:#fff;border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.photo-add{width:64px;height:64px;border-radius:6px;border:1.5px dashed #ccc;display:flex;align-items:center;justify-content:center;font-size:22px;color:#ccc;cursor:pointer;position:relative}
+.photo-add input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+/* ===== Print Styles ===== */
+@media print{
+  @page{margin:12mm 10mm;size:A4}
+  body{background:#fff!important;font-size:12px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .app{padding:0;max-width:100%}
+  .screen-only{display:none!important}
+  .sheet{border:1.5px solid #333!important;border-radius:0!important;margin-bottom:12px;break-inside:avoid}
+  .sheet-head{background:#185FA5!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .section{break-inside:avoid}
+  .print-hide{display:none!important}
+  .section.print-hide{display:none!important}
+  .item-row.print-hide{display:none!important}
+  .item-row{border-bottom:0.5px solid #999!important}
+  .score-input{border:1px solid #999!important;width:38px!important;height:32px!important;font-size:16px!important}
+  .overall-select{border:1px solid #999!important}
+  .write,.sel{border:0.5px solid #999!important}
+  .sel-tag{border:0.5px solid #999!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sel-tag.sel-active{background:#FFF8E8!important;border-color:#EF9F27!important}
+  .sel-tag.sel-placeholder{display:none!important}
+  .info-cell{border-right:0.5px solid #999!important;border-bottom:0.5px solid #999!important}
+  .section-title{background:#eee!important;border-bottom:0.5px solid #999!important;color:#333!important}
+  .print-footer{display:block!important;text-align:center;font-size:10px;color:#aaa;padding-top:6px;border-top:0.5px solid #ddd;margin-top:8px}
+}
+
+.print-footer{display:none}
+
+/* Print settings panel */
+.print-panel{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:950;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.print-panel.open{display:flex}
+.print-panel-box{background:#fff;border-radius:12px;width:100%;max-width:520px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15)}
+.print-panel-head{padding:14px 20px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between}
+.print-panel-head h3{font-size:15px;font-weight:600;color:#185FA5;margin:0}
+.print-panel-body{padding:16px 20px;font-size:13px;color:#444}
+.print-opt-group{margin-bottom:14px}
+.print-opt-label{font-size:12px;font-weight:600;color:#666;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.print-opt-row{display:flex;flex-wrap:wrap;gap:6px 14px}
+.print-opt-row label{font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer}
+.print-opt-row label input{margin:0}
+.print-opt-divider{border-top:0.5px solid #eee;margin:12px 0}
+.print-mode-btns{display:flex;gap:8px;margin-top:10px}
+.print-mode-btns .btn{flex:1;text-align:center}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+<div class="app">
+
+<!-- ========== Screen Header ========== -->
+<div class="screen-only page-header">
+  <div>
+    <div class="page-title">租房实地考察评分表</div>
+    <div class="page-subtitle">线下打印打分 / 线上填写保存</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-primary" onclick="openQRPanel()">📱 扫码填写</button>
+    <button class="btn btn-primary" onclick="openPrintPanel()">🖨️ 打印设置</button>
+    <button class="btn btn-primary" onclick="saveRecord()">保存记录</button>
+    <button class="btn btn-outline" onclick="showRecords()">查看记录</button>
+    <button class="btn btn-outline" onclick="exportRecords()">📤 导出</button>
+    <button class="btn btn-outline" onclick="document.getElementById('importFileInput').click()">📥 导入</button>
+    <button class="btn btn-outline" onclick="resetForm()">清空</button>
+    <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importRecords(event)">
+  </div>
+</div>
+
+<!-- ========== Print Header ========== -->
+<div class="sheet-head" style="margin-bottom:0;border-radius:10px 10px 0 0">
+  <h2>租房实地考察评分表</h2>
+  <span class="sheet-badge" id="printDate"></span>
+</div>
+
+<!-- ========== Score Legend ========== -->
+<div class="score-legend" id="printLegend">
+  <div class="score-legend-title">评分标准（各项 1–5 分）</div>
+  <div class="legend-row"><span class="legend-num l5">5</span><span>非常好，远超预期，基本无短板</span><span class="legend-tag green">可租</span></div>
+  <div class="legend-row"><span class="legend-num l4">4</span><span>较好，整体满意，个别小问题可接受</span><span class="legend-tag green">可租</span></div>
+  <div class="legend-row"><span class="legend-num l3">3</span><span>一般，有硬伤但能忍受，需综合权衡</span><span class="legend-tag yellow">勉强可租</span></div>
+  <div class="legend-row"><span class="legend-num l2">2</span><span>较差，多项不达标，日常居住体验不佳</span><span class="legend-tag red">不建议租</span></div>
+  <div class="legend-row"><span class="legend-num l1">1</span><span>很差，存在严重问题，强烈建议放弃</span><span class="legend-tag red">别租</span></div>
+  <div style="margin-top:6px;font-size:11px;color:#888;line-height:1.5">
+    <strong>综合评定：</strong>各项均分 <span style="color:#3B6D11;font-weight:600">≥4.0</span> 推荐租 · <span style="color:#185FA5;font-weight:600">3.0–3.9</span> 可租但要权衡 · <span style="color:#EF9F27;font-weight:600">2.0–2.9</span> 谨慎 · <span style="color:#A32D2D;font-weight:600">&lt;2.0</span> 建议放弃
+  </div>
+</div>
+
+<!-- ========== The Sheet ========== -->
+<div class="sheet">
+
+  <!-- Basic Info -->
+  <div class="info-grid">
+    <div class="info-cell">
+      <span style="font-size:11px;color:#999;font-weight:500">房源名称</span>
+      <input class="write" style="width:100%" id="f_name" placeholder="小区 + 房号">
+    </div>
+    <div class="info-cell">
+      <span style="font-size:11px;color:#999;font-weight:500">考察日期</span>
+      <input class="write" style="width:100%" id="f_date" type="date">
+    </div>
+    <div class="info-cell">
+      <span style="font-size:11px;color:#999;font-weight:500">地址</span>
+      <input class="write" style="width:100%" id="f_addr" placeholder="详细地址">
+    </div>
+    <div class="info-cell">
+      <span style="font-size:11px;color:#999;font-weight:500">月租金</span>
+      <input class="write" style="width:100%" id="f_rent" type="number" placeholder="元">
+    </div>
+    <div class="info-cell">
+      <span style="font-size:11px;color:#999;font-weight:500">押付方式</span>
+      <select class="sel" style="width:100%" id="f_deposit">
+        <option value="">选择</option>
+        <option>押一付一</option>
+        <option>押一付三</option>
+        <option>押二付三</option>
+        <option>其他</option>
+      </select>
+    </div>
+    <div class="info-cell">
+      <span style="font-size:11px;color:#999;font-weight:500">房型</span>
+      <input class="write" style="width:100%" id="f_type" placeholder="2室1厅 / 整租">
+    </div>
+    <div class="info-cell">
+      <span style="font-size:11px;color:#999;font-weight:500">楼层</span>
+      <input class="write" style="width:100%" id="f_floor" placeholder="如：6/18层">
+    </div>
+    <div class="info-cell">
+      <span style="font-size:11px;color:#999;font-weight:500">面积</span>
+      <input class="write" style="width:100%" id="f_area" placeholder="平方米">
+    </div>
+  </div>
+
+  <!-- ===== Section 1: 通勤 ===== -->
+  <div class="section" data-print-name="通勤与交通">
+    <div class="section-title"><span class="sec-num">1</span>通勤与交通</div>
+    <div class="item-row">
+      <div class="item-label">最近地铁站</div>
+      <div class="item-content">
+        <input class="write write-wide" id="s_subway" placeholder="站名 + 线路">
+        <span class="write-lbl">步行</span><input class="write write-narrow" id="s_subway_walk" type="number" placeholder="--">
+        <span class="write-lbl">分钟</span>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_subway_sc" id="s_subway_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">到公司距离</div>
+      <div class="item-content">
+        <span class="write-lbl">距离</span><input class="write write-narrow" id="s_work_dist" type="number" step="0.1" placeholder="--">
+        <span class="write-lbl">km</span>
+        <span class="write-lbl">通勤约</span><input class="write write-narrow" id="s_work_time" type="number" placeholder="--">
+        <span class="write-lbl">分钟</span>
+        <span class="write-lbl">方式</span>
+        <select class="sel" id="s_work_way"><option>地铁</option><option>公交</option><option>开车</option><option>骑行</option></select>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_work_sc" id="s_work_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">周边公交站</div>
+      <div class="item-content">
+        <input class="write write-wide" id="s_bus" placeholder="最近公交站名 / 线路">
+        <label class="ck"><input type="checkbox" id="s_bus_3min"> 3分钟内</label>
+        <label class="ck"><input type="checkbox" id="s_bus_10min"> 10分钟内</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_bus_sc" id="s_bus_sc" placeholder="-"></div>
+    </div>
+  </div>
+
+  <!-- ===== Section 2: 水电燃气 ===== -->
+  <div class="section" data-print-name="水电燃气费率">
+    <div class="section-title"><span class="sec-num">2</span>水电燃气费率</div>
+    <div class="item-row">
+      <div class="item-label">电费单价</div>
+      <div class="item-content">
+        <input class="write write-narrow" id="s_elec" type="number" step="0.01" placeholder="0.00">
+        <span class="write-lbl">元/度</span>
+        <select class="sel" id="s_elec_type"><option value="">类型</option><option>居民电</option><option>商业电</option></select>
+        <span class="write-lbl">月均约</span><input class="write write-narrow" id="s_elec_est" type="number" placeholder="--">
+        <span class="write-lbl">度</span>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_elec_sc" id="s_elec_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">水费</div>
+      <div class="item-content">
+        <input class="write write-narrow" id="s_water" type="number" step="0.01" placeholder="0.00">
+        <span class="write-lbl">元/吨</span>
+        <select class="sel" id="s_water_meter"><option value="">水表</option><option>独立水表</option><option>均摊</option><option>包在租金</option></select>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_water_sc" id="s_water_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">燃气</div>
+      <div class="item-content">
+        <select class="sel" id="s_gas"><option value="">类型</option><option>管道天然气</option><option>罐装煤气</option><option>无（纯电）</option></select>
+        <span class="write-lbl">单价</span><input class="write write-narrow" id="s_gas_price" type="number" step="0.01" placeholder="--">
+        <span class="write-lbl">元/方</span>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_gas_sc" id="s_gas_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">宽带网络</div>
+      <div class="item-content">
+        <select class="sel" id="s_net_isp"><option value="">运营商</option><option>电信</option><option>联通</option><option>移动</option><option>长城</option></select>
+        <input class="write write-narrow" id="s_net_speed" type="number" placeholder="100">
+        <span class="write-lbl">M</span>
+        <span class="write-lbl">月费</span><input class="write write-narrow" id="s_net_fee" type="number" placeholder="--">
+        <span class="write-lbl">元</span>
+        <select class="sel" id="s_net_share"><option value="">方式</option><option>独享</option><option>合租共享</option><option>需自装</option></select>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_net_sc" id="s_net_sc" placeholder="-"></div>
+    </div>
+  </div>
+
+  <!-- ===== Section 3: 房屋环境 ===== -->
+  <div class="section" data-print-name="房屋环境">
+    <div class="section-title"><span class="sec-num">3</span>房屋环境</div>
+    <div class="item-row">
+      <div class="item-label">朝向与采光</div>
+      <div class="item-content">
+        <select class="sel" id="s_dir"><option value="">朝向</option><option>南北通透</option><option>朝南</option><option>朝东</option><option>朝西</option><option>朝北</option></select>
+        <select class="sel" id="s_light"><option value="">采光</option><option>充足</option><option>一般</option><option>偏暗</option></select>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_dir_sc" id="s_dir_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">噪音情况</div>
+      <div class="item-content">
+        <label class="ck"><input type="checkbox" id="n_street"> 临街</label>
+        <label class="ck"><input type="checkbox" id="n_market"> 菜市场</label>
+        <label class="ck"><input type="checkbox" id="n_school"> 学校</label>
+        <label class="ck"><input type="checkbox" id="n_build"> 工地</label>
+        <label class="ck"><input type="checkbox" id="n_elevator"> 电梯</label>
+        <label class="ck"><input type="checkbox" id="n_bar"> 夜市/酒吧</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_noise_sc" id="s_noise_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">隔音质量</div>
+      <div class="item-content">
+        <select class="sel" id="s_wall"><option value="">墙体</option><option>混凝土（好）</option><option>砖墙（较好）</option><option>轻体墙（差）</option></select>
+        <select class="sel" id="s_upstairs"><option value="">楼上</option><option>无邻居</option><option>普通住户</option><option>有小孩</option></select>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_sound_sc" id="s_sound_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">通风</div>
+      <div class="item-content">
+        <select class="sel" id="s_wind"><option value="">通风</option><option>穿堂风（好）</option><option>单面通风</option><option>通风差</option></select>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_wind_sc" id="s_wind_sc" placeholder="-"></div>
+    </div>
+  </div>
+
+  <!-- ===== Section 4: 安全 ===== -->
+  <div class="section" data-print-name="安全检查">
+    <div class="section-title"><span class="sec-num">4</span>安全检查</div>
+    <div class="item-row">
+      <div class="item-label">水患 / 防潮</div>
+      <div class="item-content">
+        <label class="ck"><input type="checkbox" id="safe_mold"> 有霉斑</label>
+        <label class="ck"><input type="checkbox" id="safe_water"> 有水渍</label>
+        <label class="ck"><input type="checkbox" id="safe_drain"> 排水不畅</label>
+        <label class="ck"><input type="checkbox" id="safe_leak"> 曾漏水</label>
+        <label class="ck"><input type="checkbox" id="safe_ok" style="color:#3B6D11;font-weight:600"> 无异常</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_water_safe_sc" id="s_water_safe_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">电气安全</div>
+      <div class="item-content">
+        <label class="ck"><input type="checkbox" id="safe_wire"> 电线老化</label>
+        <label class="ck"><input type="checkbox" id="safe_smoke"> 有烟感</label>
+        <label class="ck"><input type="checkbox" id="safe_exit"> 消防通道</label>
+        <label class="ck"><input type="checkbox" id="safe_eleok" style="color:#3B6D11;font-weight:600"> 无异常</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_elec_safe_sc" id="s_elec_safe_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">虫害</div>
+      <div class="item-content">
+        <label class="ck"><input type="checkbox" id="pest_bug"> 有蟑螂/鼠迹</label>
+        <label class="ck"><input type="checkbox" id="pest_smell"> 异味</label>
+        <label class="ck"><input type="checkbox" id="pest_ok" style="color:#3B6D11;font-weight:600"> 干净无虫</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_pest_sc" id="s_pest_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">门锁 / 门禁</div>
+      <div class="item-content">
+        <select class="sel" id="s_lock"><option value="">门锁</option><option>智能锁</option><option>机械锁</option><option>老式锁（需换）</option></select>
+        <label class="ck"><input type="checkbox" id="s_intercom"> 有门禁/对讲</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_lock_sc" id="s_lock_sc" placeholder="-"></div>
+    </div>
+  </div>
+
+  <!-- ===== Section 5: 设施 ===== -->
+  <div class="section" data-print-name="设施与舒适度">
+    <div class="section-title"><span class="sec-num">5</span>设施与舒适度</div>
+    <div class="item-row">
+      <div class="item-label">热水器</div>
+      <div class="item-content">
+        <select class="sel" id="s_hw"><option value="">类型</option><option>燃气</option><option>电热</option><option>太阳能</option><option>中央热水</option></select>
+        <span class="write-lbl">容量</span><input class="write write-narrow" id="s_hw_vol" type="number" placeholder="--">
+        <span class="write-lbl">L</span>
+        <span class="write-lbl">出热</span><input class="write write-narrow" id="s_hw_time" type="number" placeholder="--">
+        <span class="write-lbl">秒</span>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_hw_sc" id="s_hw_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">手机信号</div>
+      <div class="item-content">
+        <select class="sel" id="s_signal"><option value="">信号</option><option>全屋满格</option><option>大部分良好</option><option>部分弱</option><option>很差</option></select>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_signal_sc" id="s_signal_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">空调 / 暖气</div>
+      <div class="item-content">
+        <label class="ck"><input type="checkbox" id="s_ac"> 有空调</label>
+        <span class="write-lbl">几台</span><input class="write write-narrow" id="s_ac_count" type="number" placeholder="--">
+        <select class="sel" id="s_heat"><option value="">暖气</option><option>集中供暖</option><option>自采暖</option><option>无暖气</option></select>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_ac_sc" id="s_ac_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">家具家电清单</div>
+      <div class="item-content">
+        <div class="furnish-grid">
+          <div class="furnish-cat">大家电</div>
+          <label class="ck"><input type="checkbox" id="fur_fridge"> 冰箱</label>
+          <label class="ck"><input type="checkbox" id="fur_washer"> 洗衣机</label>
+          <label class="ck"><input type="checkbox" id="fur_tv"> 电视</label>
+          <label class="ck"><input type="checkbox" id="fur_microwave"> 微波炉</label>
+          <label class="ck"><input type="checkbox" id="fur_oven"> 烤箱</label>
+          <label class="ck"><input type="checkbox" id="fur_purifier"> 净水器</label>
+          <label class="ck"><input type="checkbox" id="fur_aclean"> 空气净化器</label>
+          <label class="ck"><input type="checkbox" id="fur_dryer"> 烘干机</label>
+          <div class="furnish-cat">厨房</div>
+          <label class="ck"><input type="checkbox" id="fur_stove"> 燃气灶</label>
+          <label class="ck"><input type="checkbox" id="fur_hood"> 抽油烟机</label>
+          <label class="ck"><input type="checkbox" id="fur_rice"> 电饭煲</label>
+          <label class="ck"><input type="checkbox" id="fur_kettle"> 烧水壶</label>
+          <div class="furnish-cat">家具</div>
+          <label class="ck"><input type="checkbox" id="fur_bed"> 床</label>
+          <label class="ck"><input type="checkbox" id="fur_mattress"> 床垫</label>
+          <label class="ck"><input type="checkbox" id="fur_sofa"> 沙发</label>
+          <label class="ck"><input type="checkbox" id="fur_desk"> 书桌</label>
+          <label class="ck"><input type="checkbox" id="fur_chair"> 椅子</label>
+          <label class="ck"><input type="checkbox" id="fur_wardrobe"> 衣柜</label>
+          <label class="ck"><input type="checkbox" id="fur_shoe"> 鞋柜</label>
+          <label class="ck"><input type="checkbox" id="fur_cabinet"> 储物柜</label>
+          <label class="ck"><input type="checkbox" id="fur_curtain"> 窗帘</label>
+          <label class="ck"><input type="checkbox" id="fur_mirror"> 镜子</label>
+          <div class="furnish-cat">其他</div>
+          <label class="ck"><input type="checkbox" id="fur_wifi"> WiFi 路由器</label>
+          <label class="ck"><input type="checkbox" id="fur_iron"> 熨斗</label>
+          <label class="ck"><input type="checkbox" id="fur_vacuum"> 吸尘器</label>
+          <label class="ck"><input type="checkbox" id="fur_apt"> 智能门锁</label>
+          <label class="ck"><input type="checkbox" id="fur_balcony"> 阳台晾衣架</label>
+          <label class="ck"><input type="checkbox" id="fur_exhaust"> 排气扇/浴霸</label>
+        </div>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_furn_sc" id="s_furn_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">卫生间</div>
+      <div class="item-content">
+        <label class="ck"><input type="checkbox" id="s_bath_window"> 有窗</label>
+        <label class="ck"><input type="checkbox" id="s_bath_dry"> 干湿分离</label>
+        <select class="sel" id="s_bath_count"><option value="">数量</option><option>独卫1间</option><option>独卫2间</option><option>共用</option></select>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_bath_sc" id="s_bath_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">储物空间</div>
+      <div class="item-content">
+        <label class="ck"><input type="checkbox" id="s_closet"> 衣柜</label>
+        <label class="ck"><input type="checkbox" id="s_storage"> 储物间/阳台柜</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_store_sc" id="s_store_sc" placeholder="-"></div>
+    </div>
+  </div>
+
+  <!-- ===== Section 6: 物业与合同 ===== -->
+  <div class="section" data-print-name="物业与合同">
+    <div class="section-title"><span class="sec-num">6</span>物业与合同</div>
+    <div class="item-row">
+      <div class="item-label">物业水平</div>
+      <div class="item-content">
+        <select class="sel" id="s_prop"><option value="">评级</option><option>优秀</option><option>一般</option><option>较差</option><option>无物业</option></select>
+        <span class="write-lbl">物业费</span><input class="write write-narrow" id="s_prop_fee" type="number" placeholder="--">
+        <span class="write-lbl">元/月</span>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_prop_sc" id="s_prop_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">是否包物业/宽带</div>
+      <div class="item-content">
+        <select class="sel" id="s_inc_prop"><option value="">物业费</option><option>包含在租金</option><option>房东另付</option><option>租客自付</option></select>
+        <select class="sel" id="s_inc_net"><option value="">宽带费</option><option>包含在租金</option><option>房东另付</option><option>租客自付</option></select>
+        <span class="write-lbl">月合计杂费约</span><input class="write write-narrow" id="s_inc_extra" type="number" placeholder="--">
+        <span class="write-lbl">元</span>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_inc_sc" id="s_inc_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">缴费透明度</div>
+      <div class="item-content">
+        <select class="sel" id="s_bill"><option value="">方式</option><option>直接缴给供应商</option><option>给房东代缴</option><option>包含在租金</option></select>
+        <label class="ck"><input type="checkbox" id="s_bill_check"> 账单可查</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_bill_sc" id="s_bill_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">房东沟通印象</div>
+      <div class="item-content">
+        <label class="ck"><input type="checkbox" id="s_ll_easy"> 沟通顺畅</label>
+        <label class="ck"><input type="checkbox" id="s_ll_visit"> 提前告知入户</label>
+        <label class="ck"><input type="checkbox" id="s_ll_repair"> 维修责任明确</label>
+        <label class="ck"><input type="checkbox" id="s_ll_photo"> 已拍照留档现状</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_ll_sc" id="s_ll_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">退租/押金条款</div>
+      <div class="item-content">
+        <label class="ck"><input type="checkbox" id="s_ret_normal"> 正常损耗不扣押金</label>
+        <label class="ck"><input type="checkbox" id="s_ret_clean"> 提前N天通知即可</label>
+        <label class="ck"><input type="checkbox" id="s_ret_trans"> 可转租</label>
+        <input class="write write-wide" id="s_ret_note" placeholder="其他约定...">
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_ret_sc" id="s_ret_sc" placeholder="-"></div>
+    </div>
+  </div>
+
+  <!-- ===== Overall ===== -->
+  <div class="overall-box" id="printOverall">
+    <div class="overall-label">综合评分</div>
+    <select class="overall-select" id="overallSelect">
+      <option value="0">请选择</option>
+      <option value="5">⭐⭐⭐⭐⭐ 强烈推荐</option>
+      <option value="4">⭐⭐⭐⭐ 值得考虑</option>
+      <option value="3">⭐⭐⭐ 一般</option>
+      <option value="2">⭐⭐ 勉强考虑</option>
+      <option value="1">⭐ 不推荐</option>
+    </select>
+    <div class="overall-result" id="overallResult" style="color:#999">未评分</div>
+    <div id="avgScoreBox" style="font-size:12px;color:#888;margin-left:auto;display:flex;align-items:center;gap:4px">
+      各项均分：<strong id="avgScoreVal" style="font-size:18px;color:#185FA5">--</strong>
+      <span id="avgScoreVerdict" style="font-size:11px;padding:1px 6px;border-radius:6px;display:none"></span>
+    </div>
+    <input type="hidden" id="f_overall" value="0">
+  </div>
+
+  <!-- Notes -->
+  <div class="notes-box" id="printNotes">
+    <label>备注 / 补充说明</label>
+    <textarea class="notes" id="f_notes" placeholder="记录其他注意事项、特殊情况、与房东沟通要点..."></textarea>
+  </div>
+
+  <!-- Photos -->
+  <div class="photo-box screen-only">
+    <label>现场照片</label>
+    <div class="photo-grid">
+      <div class="photo-add" onclick="document.getElementById('photoInput').click()">
+        <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotos(event)">
+        +
+      </div>
+    </div>
+    <div class="photo-grid" id="photoPreview"></div>
+  </div>
+
+  <div class="print-footer">租房实地考察评分表 · 打印时间：<span id="printTimeSpan"></span></div>
+</div><!-- /sheet -->
+
+<!-- ========== Print Settings Panel ========== -->
+<div id="printPanel" class="print-panel">
+  <div class="print-panel-box">
+    <div class="print-panel-head">
+      <h3>打印设置</h3>
+      <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="closePrintPanel()">✕ 关闭</button>
+    </div>
+    <div class="print-panel-body">
+      <!-- Print sections -->
+      <div class="print-opt-group">
+        <div class="print-opt-label">选择要打印的模块</div>
+        <div class="print-opt-row" id="printSectionChecks"></div>
+      </div>
+      <div class="print-opt-divider"></div>
+      <!-- Extra options -->
+      <div class="print-opt-group">
+        <div class="print-opt-label">其他选项</div>
+        <div class="print-opt-row">
+          <label><input type="checkbox" id="printOpt_legend" checked> 评分标准图例</label>
+          <label><input type="checkbox" id="printOpt_overall" checked> 综合评分区</label>
+          <label><input type="checkbox" id="printOpt_notes" checked> 备注栏</label>
+          <label><input type="checkbox" id="printOpt_scorecircle" checked> 评分栏</label>
+        </div>
+      </div>
+      <div class="print-opt-divider"></div>
+      <!-- Action buttons -->
+      <div class="print-mode-btns">
+        <button class="btn btn-primary" onclick="doPrint()">确认并打印</button>
+        <button class="btn btn-outline" onclick="closePrintPanel()">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== QR Code Panel ========== -->
+<div id="qrPanel" class="print-panel">
+  <div class="print-panel-box" style="max-width:460px">
+    <div class="print-panel-head">
+      <h3>📱 二维码生成</h3>
+      <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="closeQRPanel()">✕ 关闭</button>
+    </div>
+    <div class="print-panel-body" style="text-align:center">
+      <div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.6">
+        输入评分表的在线链接，生成可下载保存的二维码图片。<br>
+        <strong style="color:#185FA5">可随时扫码访问，不限网络环境</strong>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <input class="write" style="flex:1;font-size:13px" id="qrURLInput" placeholder="输入网址，如 https://your-site.com/rental.html">
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="generateQRFromURL()">生成二维码</button>
+      <div id="qrCodeContainer" style="display:none;justify-content:center;flex-direction:column;align-items:center;margin:12px 0">
+        <div id="qrCode" style="padding:16px;background:#fff;border:2px solid #eee;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)"></div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn btn-primary" style="font-size:12px;padding:6px 16px" onclick="downloadQR()">📥 下载二维码图片</button>
+          <button class="btn btn-outline" style="font-size:12px;padding:6px 16px" onclick="copyQRURL()">📋 复制链接</button>
+        </div>
+      </div>
+      <div id="qrURLDisplay" style="font-size:11px;color:#888;word-break:break-all;margin-top:8px"></div>
+      <div id="qrStatus" style="font-size:12px;color:#185FA5;margin-top:8px;font-weight:500"></div>
+      <div class="print-opt-divider"></div>
+      <div style="font-size:11px;color:#999;line-height:1.8;text-align:left">
+        <div>📌 <strong>使用说明：</strong></div>
+        <div>1. 将此页面部署到公网（如 Netlify、Vercel 等免费托管平台）</div>
+        <div>2. 将获得的在线链接粘贴到上方输入框</div>
+        <div>3. 点击"生成二维码"，然后"下载二维码图片"保存到手机</div>
+        <div>4. 随时微信扫码打开填写，不限WiFi环境</div>
+        <div style="margin-top:6px;color:#EF9F27">💡 快速部署：打开 <a href="https://app.netlify.com/drop" target="_blank" style="color:#185FA5;text-decoration:underline">app.netlify.com/drop</a>，把 HTML 文件拖进去即可获得公网链接</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Records Panel (overlay) ========== -->
+<div id="recordsPanel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:860px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15)">
+    <div style="padding:16px 20px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:600;color:#185FA5">已保存的考察记录</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="printAllRecords()">打印全部</button>
+        <button class="btn btn-outline" onclick="closeRecords()">关闭</button>
+      </div>
+    </div>
+    <div id="recordsList" style="padding:16px 20px;max-height:70vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;display:none;align-items:center;justify-content:center" onclick="this.style.display='none'">
+  <img id="lightboxImg" style="max-width:90vw;max-height:85vh;border-radius:8px" src="" alt="">
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:#2c2c2a;color:#fff;padding:8px 18px;border-radius:8px;font-size:12px;transition:transform .25s;z-index:999"></div>
+
+</div><!-- /app -->
+
+<script>
+// ---- Convert selects to tag lists ----
+document.querySelectorAll('.sel').forEach(sel => {
+  const list = document.createElement('div');
+  list.className = 'sel-tag-list';
+
+  Array.from(sel.options).forEach(opt => {
+    const tag = document.createElement('span');
+    tag.className = 'sel-tag';
+    const isPlaceholder = !opt.value && opt.textContent === '';
+    if(isPlaceholder){
+      tag.classList.add('sel-placeholder');
+      tag.textContent = '请选择';
+    } else {
+      tag.textContent = opt.textContent || opt.value;
+    }
+    tag.dataset.value = opt.value;
+
+    if(opt.selected && !isPlaceholder) tag.classList.add('sel-active');
+
+    if(!isPlaceholder) {
+      tag.onclick = () => {
+        // Update select value
+        sel.value = opt.value;
+        // Update tag visuals
+        list.querySelectorAll('.sel-tag').forEach(t => t.classList.remove('sel-active'));
+        tag.classList.add('sel-active');
+      };
+    }
+
+    list.appendChild(tag);
+  });
+
+  sel.style.display = 'none';
+  sel.parentNode.insertBefore(list, sel.nextSibling);
+});
+
+// ---- Score inputs ----
+document.querySelectorAll('.score-input').forEach(input => {
+  const clamp = () => {
+    let v = parseInt(input.value);
+    if (v && (v < 1 || v > 5)) input.value = Math.min(5, Math.max(1, v));
+    input.classList.toggle('filled', input.value >= 1 && input.value <= 5);
+    updateAvgScore();
+  };
+  input.addEventListener('input', clamp);
+  input.addEventListener('change', clamp);
+});
+
+// ---- Overall select ----
+const ovLabels=['不推荐','勉强考虑','一般','值得考虑','强烈推荐'];
+const ovSelect = document.getElementById('overallSelect');
+ovSelect.addEventListener('change', () => {
+  const v = parseInt(ovSelect.value) || 0;
+  document.getElementById('f_overall').value = v;
+  ovSelect.classList.toggle('filled', v > 0);
+  const el = document.getElementById('overallResult');
+  if(v > 0){
+    el.textContent = ovLabels[v-1];
+    el.style.color = v>=4 ? '#3B6D11' : v>=3 ? '#854F0B' : '#A32D2D';
+  } else {
+    el.textContent = '未评分';
+    el.style.color = '#999';
+  }
+  updateAvgScore();
+});
+
+// Auto-calculate average score from all item scores
+function updateAvgScore(){
+  const scores=collectScores();
+  const vals=Object.values(scores).filter(v=>v>0);
+  const avg=vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10:0;
+  const avgEl=document.getElementById('avgScoreVal');
+  const verdictEl=document.getElementById('avgScoreVerdict');
+  if(avgEl) avgEl.textContent=avg||'--';
+  if(verdictEl){
+    if(avg>=4){verdictEl.textContent='推荐租';verdictEl.style.color='#3B6D11';verdictEl.style.background='#EAF3DE';verdictEl.style.display='inline'}
+    else if(avg>=3){verdictEl.textContent='可租但要权衡';verdictEl.style.color='#185FA5';verdictEl.style.background='#E6F1FB';verdictEl.style.display='inline'}
+    else if(avg>=2){verdictEl.textContent='谨慎';verdictEl.style.color='#EF9F27';verdictEl.style.background='#FAEEDA';verdictEl.style.display='inline'}
+    else if(avg>0){verdictEl.textContent='建议放弃';verdictEl.style.color='#A32D2D';verdictEl.style.background='#FCEBEB';verdictEl.style.display='inline'}
+    else{verdictEl.style.display='none'}
+  }
+}
+
+// ---- Photos ----
+let currentPhotos=[];
+function handlePhotos(e){
+  Array.from(e.target.files).forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>{currentPhotos.push(ev.target.result);renderPhotoPreviews();};
+    r.readAsDataURL(f);
+  });
+  e.target.value='';
+}
+function renderPhotoPreviews(){
+  const p=document.getElementById('photoPreview');
+  p.innerHTML='';
+  currentPhotos.forEach((src,i)=>{
+    const d=document.createElement('div');
+    d.className='photo-thumb';
+    d.innerHTML=`<img src="${src}" onclick="document.getElementById('lightbox').style.display='flex';document.getElementById('lightboxImg').src='${src}'"><span class="photo-del" onclick="event.stopPropagation();currentPhotos.splice(${i},1);renderPhotoPreviews()">✕</span>`;
+    p.appendChild(d);
+  });
+}
+
+// ---- Helpers ----
+function getVal(id){return(document.getElementById(id)||{}).value||'';}
+function getCK(id){return(document.getElementById(id)||{}).checked||false;}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function resetForm(){
+  document.querySelectorAll('.write,.sel').forEach(e=>{e.value='';});
+  document.querySelectorAll('input[type=checkbox]').forEach(e=>{e.checked=false;});
+  document.querySelectorAll('.score-input').forEach(e=>{e.value='';e.classList.remove('filled');});
+  ovSelect.value='0';ovSelect.classList.remove('filled');
+  document.getElementById('overallResult').textContent='未评分';
+  document.getElementById('overallResult').style.color='#999';
+  document.getElementById('f_overall').value=0;
+  document.getElementById('avgScoreVal').textContent='--';
+  document.getElementById('avgScoreVerdict').style.display='none';
+  document.getElementById('f_date').value=new Date().toISOString().slice(0,10);
+  // Reset tag lists for hidden selects
+  document.querySelectorAll('.sel-tag-list').forEach(list=>{
+    list.querySelectorAll('.sel-tag').forEach(t=>t.classList.remove('sel-active'));
+  });
+  currentPhotos=[];renderPhotoPreviews();
+  showToast('已清空');
+}
+
+// ---- Save / Load ----
+function collectScores(){
+  const scores={};
+  document.querySelectorAll('.score-input').forEach(input => {
+    const key = input.dataset.key;
+    const v = parseInt(input.value);
+    if(v >= 1 && v <= 5) scores[key] = v;
+    else scores[key] = 0;
+  });
+  return scores;
+}
+
+function saveRecord(){
+  const name=getVal('f_name').trim();
+  if(!name){showToast('请填写房源名称');return;}
+  const overall=parseInt(getVal('f_overall'))||0;
+  if(!overall){showToast('请给综合评分');return;}
+
+  const record={
+    id:Date.now(),
+    name, date:getVal('f_date')||new Date().toISOString().slice(0,10),
+    addr:getVal('f_addr'), rent:getVal('f_rent'), deposit:getVal('f_deposit'),
+    type:getVal('f_type'), floor:getVal('f_floor'), area:getVal('f_area'),
+    overall, notes:getVal('f_notes'), photos:[...currentPhotos],
+    scores:collectScores(),
+    fields:{
+      s_subway:getVal('s_subway'),s_subway_walk:getVal('s_subway_walk'),
+      s_work_dist:getVal('s_work_dist'),s_work_time:getVal('s_work_time'),s_work_way:getVal('s_work_way'),
+      s_bus:getVal('s_bus'),s_bus_3min:getCK('s_bus_3min'),s_bus_10min:getCK('s_bus_10min'),
+      s_elec:getVal('s_elec'),s_elec_type:getVal('s_elec_type'),s_elec_est:getVal('s_elec_est'),
+      s_water:getVal('s_water'),s_water_meter:getVal('s_water_meter'),
+      s_gas:getVal('s_gas'),s_gas_price:getVal('s_gas_price'),
+      s_net_isp:getVal('s_net_isp'),s_net_speed:getVal('s_net_speed'),s_net_fee:getVal('s_net_fee'),s_net_share:getVal('s_net_share'),
+      s_dir:getVal('s_dir'),s_light:getVal('s_light'),
+      n_street:getCK('n_street'),n_market:getCK('n_market'),n_school:getCK('n_school'),n_build:getCK('n_build'),n_elevator:getCK('n_elevator'),n_bar:getCK('n_bar'),
+      s_wall:getVal('s_wall'),s_upstairs:getVal('s_upstairs'),s_wind:getVal('s_wind'),
+      safe_mold:getCK('safe_mold'),safe_water:getCK('safe_water'),safe_drain:getCK('safe_drain'),safe_leak:getCK('safe_leak'),safe_ok:getCK('safe_ok'),
+      safe_wire:getCK('safe_wire'),safe_smoke:getCK('safe_smoke'),safe_exit:getCK('safe_exit'),safe_eleok:getCK('safe_eleok'),
+      pest_bug:getCK('pest_bug'),pest_smell:getCK('pest_smell'),pest_ok:getCK('pest_ok'),
+      s_lock:getVal('s_lock'),s_intercom:getCK('s_intercom'),
+      s_hw:getVal('s_hw'),s_hw_vol:getVal('s_hw_vol'),s_hw_time:getVal('s_hw_time'),
+      s_signal:getVal('s_signal'),
+      s_ac:getCK('s_ac'),s_ac_count:getVal('s_ac_count'),s_heat:getVal('s_heat'),
+      s_bath_window:getCK('s_bath_window'),s_bath_dry:getCK('s_bath_dry'),s_bath_count:getVal('s_bath_count'),
+      s_closet:getCK('s_closet'),s_storage:getCK('s_storage'),
+      fur_fridge:getCK('fur_fridge'),fur_washer:getCK('fur_washer'),fur_tv:getCK('fur_tv'),fur_microwave:getCK('fur_microwave'),fur_oven:getCK('fur_oven'),fur_purifier:getCK('fur_purifier'),fur_aclean:getCK('fur_aclean'),fur_dryer:getCK('fur_dryer'),
+      fur_stove:getCK('fur_stove'),fur_hood:getCK('fur_hood'),fur_rice:getCK('fur_rice'),fur_kettle:getCK('fur_kettle'),
+      fur_bed:getCK('fur_bed'),fur_mattress:getCK('fur_mattress'),fur_sofa:getCK('fur_sofa'),fur_desk:getCK('fur_desk'),fur_chair:getCK('fur_chair'),fur_wardrobe:getCK('fur_wardrobe'),fur_shoe:getCK('fur_shoe'),fur_cabinet:getCK('fur_cabinet'),fur_curtain:getCK('fur_curtain'),fur_mirror:getCK('fur_mirror'),
+      fur_wifi:getCK('fur_wifi'),fur_iron:getCK('fur_iron'),fur_vacuum:getCK('fur_vacuum'),fur_apt:getCK('fur_apt'),fur_balcony:getCK('fur_balcony'),fur_exhaust:getCK('fur_exhaust'),
+      s_prop:getVal('s_prop'),s_prop_fee:getVal('s_prop_fee'),
+      s_inc_prop:getVal('s_inc_prop'),s_inc_net:getVal('s_inc_net'),s_inc_extra:getVal('s_inc_extra'),
+      s_bill:getVal('s_bill'),s_bill_check:getCK('s_bill_check'),
+      s_ll_easy:getCK('s_ll_easy'),s_ll_visit:getCK('s_ll_visit'),s_ll_repair:getCK('s_ll_repair'),s_ll_photo:getCK('s_ll_photo'),
+      s_ret_normal:getCK('s_ret_normal'),s_ret_clean:getCK('s_ret_clean'),s_ret_trans:getCK('s_ret_trans'),s_ret_note:getVal('s_ret_note'),
+    }
+  };
+
+  const records=loadRecords();
+  records.unshift(record);
+  localStorage.setItem('rental_inspect',JSON.stringify(records));
+  showToast('保存成功！共 '+records.length+' 条记录');
+}
+
+function loadRecords(){
+  try{return JSON.parse(localStorage.getItem('rental_inspect')||'[]');}
+  catch(e){return[];}
+}
+
+function deleteRecord(id){
+  if(!confirm('删除这条记录？'))return;
+  const records=loadRecords().filter(r=>r.id!==id);
+  localStorage.setItem('rental_inspect',JSON.stringify(records));
+  showRecords();
+  showToast('已删除');
+}
+
+function showRecords(){
+  document.getElementById('recordsPanel').style.display='flex';
+  renderRecordsList();
+}
+function closeRecords(){
+  document.getElementById('recordsPanel').style.display='none';
+}
+
+function renderRecordsList(){
+  const records=loadRecords();
+  const list=document.getElementById('recordsList');
+  if(!records.length){
+    list.innerHTML='<div style="text-align:center;padding:40px;color:#ccc;font-size:14px">暂无记录</div>';
+    return;
+  }
+  const chips=['','<span style="color:#A32D2D;background:#FCEBEB;padding:2px 8px;border-radius:8px;font-size:11px">不推荐</span>','<span style="color:#c44;background:#FEF0E0;padding:2px 8px;border-radius:8px;font-size:11px">勉强</span>','<span style="color:#854F0B;background:#FAEEDA;padding:2px 8px;border-radius:8px;font-size:11px">一般</span>','<span style="color:#185FA5;background:#E6F1FB;padding:2px 8px;border-radius:8px;font-size:11px">值得考虑</span>','<span style="color:#3B6D11;background:#EAF3DE;padding:2px 8px;border-radius:8px;font-size:11px">强烈推荐</span>'];
+  list.innerHTML=records.map(r=>{
+    const stars='★'.repeat(r.overall||0)+'☆'.repeat(5-(r.overall||0));
+    const f=r.fields||{};
+    const sc=r.scores||{};
+    // Compute total score
+    const vals=Object.values(sc).filter(v=>v>0);
+    const avg=vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10:0;
+    // Commute summary
+    let commute='';
+    if(f.s_subway) commute+=f.s_subway+(f.s_subway_walk?' 步行'+f.s_subway_walk+'分钟':'');
+    if(f.s_work_time) commute+=` · 到公司${f.s_work_time}分钟`;
+    // Fee summary
+    let fees=[];
+    if(f.s_elec) fees.push('电'+f.s_elec+'元/度');
+    if(f.s_water) fees.push('水'+f.s_water+'元/吨');
+    if(f.s_gas_price) fees.push('气'+f.s_gas_price+'元/方');
+
+    return `<div style="border:0.5px solid #e0e0d8;border-radius:8px;margin-bottom:10px;overflow:hidden">
+      <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <div>
+          <div style="font-size:14px;font-weight:500">${r.name} <span style="font-size:13px;color:#EF9F27;margin-left:6px">${stars}</span> ${chips[r.overall]||''}</div>
+          <div style="font-size:11px;color:#999;margin-top:2px">${r.date}${r.addr?' · '+r.addr:''}${r.rent?' · ¥'+r.rent+'/月':''}${commute?' · '+commute:''}${avg?' · 各项均分 '+avg:''}</div>
+        </div>
+        <div style="font-size:20px;font-weight:600;color:#185FA5">${avg||'--'}</div>
+      </div>
+      <div style="display:none;padding:10px 14px;border-top:0.5px solid #f0f0e8;font-size:12px;color:#555;line-height:2">
+        ${fees.length?'<div><strong>费率：</strong>'+fees.join(' / ')+'</div>':''}
+        ${f.s_dir?'<div><strong>朝向：</strong>'+f.s_dir+' · '+f.s_light+'</div>':''}
+        ${f.s_hw?'<div><strong>热水：</strong>'+f.s_hw+(f.s_hw_vol?' '+f.s_hw_vol+'L':'')+(f.s_hw_time?' 出热'+f.s_hw_time+'秒':'')+'</div>':''}
+        ${f.s_signal?'<div><strong>信号：</strong>'+f.s_signal+'</div>':''}
+        ${f.s_prop?'<div><strong>物业：</strong>'+f.s_prop+(f.s_prop_fee?' '+f.s_prop_fee+'元/月':'')+'</div>':''}
+        ${f.s_inc_prop||f.s_inc_net?'<div><strong>杂费：</strong>'+(f.s_inc_prop==='包含在租金'?'物业含租内':'物业'+f.s_inc_prop)+' / '+(f.s_inc_net==='包含在租金'?'宽带含租内':'宽带'+f.s_inc_net)+(f.s_inc_extra?' · 月杂费约'+f.s_inc_extra+'元':'')+'</div>':''}
+        ${f.s_lock?'<div><strong>门锁：</strong>'+f.s_lock+(f.s_intercom?' · 有门禁':'')+'</div>':''}
+        ${(()=>{
+          const furnNames={fur_fridge:'冰箱',fur_washer:'洗衣机',fur_tv:'电视',fur_microwave:'微波炉',fur_oven:'烤箱',fur_purifier:'净水器',fur_aclean:'空气净化器',fur_dryer:'烘干机',fur_stove:'燃气灶',fur_hood:'抽油烟机',fur_rice:'电饭煲',fur_kettle:'烧水壶',fur_bed:'床',fur_mattress:'床垫',fur_sofa:'沙发',fur_desk:'书桌',fur_chair:'椅子',fur_wardrobe:'衣柜',fur_shoe:'鞋柜',fur_cabinet:'储物柜',fur_curtain:'窗帘',fur_mirror:'镜子',fur_wifi:'WiFi',fur_iron:'熨斗',fur_vacuum:'吸尘器',fur_apt:'智能门锁',fur_balcony:'晾衣架',fur_exhaust:'排气扇'};
+          const items=Object.keys(furnNames).filter(k=>f[k]);
+          return items.length?'<div><strong>家具家电：</strong>'+items.map(k=>furnNames[k]).join('、')+'</div>':'';
+        })()}
+        ${r.notes?'<div style="background:#f8f8f5;padding:6px 8px;border-radius:4px;margin-top:4px"><strong>备注：</strong>'+r.notes+'</div>':''}
+        ${r.photos&&r.photos.length?'<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">'+r.photos.map(s=>'<img src="'+s+'" style="width:50px;height:50px;border-radius:4px;object-fit:cover;border:0.5px solid #ddd;cursor:pointer" onclick="document.getElementById(\'lightbox\').style.display=\'flex\';document.getElementById(\'lightboxImg\').src=\''+s+'\'">').join('')+'</div>':''}
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editRecord(${r.id})">编辑</button>
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteRecord(${r.id})">删除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editRecord(id){
+  const records=loadRecords();
+  const r=records.find(x=>x.id===id);
+  if(!r)return;
+  document.getElementById('f_name').value=r.name||'';
+  document.getElementById('f_date').value=r.date||'';
+  document.getElementById('f_addr').value=r.addr||'';
+  document.getElementById('f_rent').value=r.rent||'';
+  document.getElementById('f_deposit').value=r.deposit||'';
+  document.getElementById('f_type').value=r.type||'';
+  document.getElementById('f_floor').value=r.floor||'';
+  document.getElementById('f_area').value=r.area||'';
+  document.getElementById('f_notes').value=r.notes||'';
+  document.getElementById('f_overall').value=r.overall||0;
+  ovSelect.value=r.overall||0;
+  ovSelect.classList.toggle('filled',(r.overall||0)>0);
+  const el=document.getElementById('overallResult');
+  el.textContent=r.overall?ovLabels[r.overall-1]:'未评分';
+  el.style.color=r.overall>=4?'#3B6D11':r.overall>=3?'#854F0B':'#999';
+  currentPhotos=r.photos?[...r.photos]:[];
+  renderPhotoPreviews();
+  // Fill fields
+  const f=r.fields||{};
+  Object.keys(f).forEach(k=>{
+    const el=document.getElementById(k);
+    if(!el)return;
+    if(el.type==='checkbox') el.checked=!!f[k];
+    else el.value=f[k]||'';
+    // Sync tag lists for hidden selects
+    if(el.classList.contains('sel') && el.style.display==='none'){
+      const nextList=el.nextElementSibling;
+      if(nextList && nextList.classList.contains('sel-tag-list')){
+        nextList.querySelectorAll('.sel-tag').forEach(t=>{
+          t.classList.toggle('sel-active', t.dataset.value===el.value);
+        });
+      }
+    }
+  });
+  // Fill scores
+  const sc=r.scores||{};
+  Object.keys(sc).forEach(k=>{
+    const input=document.querySelector(`.score-input[data-key="${k}"]`);
+    if(!input)return;
+    input.value=sc[k]||'';
+    input.classList.toggle('filled', sc[k]>=1 && sc[k]<=5);
+  });
+  deleteRecord(id);
+  closeRecords();
+  window.scrollTo({top:0,behavior:'smooth'});
+  showToast('已加载到表单，修改后重新保存');
+}
+
+// ---- Print Settings ----
+let printConfig = { sections: {}, expandSel: true };
+
+function openPrintPanel(){
+  const panel = document.getElementById('printPanel');
+  panel.classList.add('open');
+  // Build section checkboxes
+  const container = document.getElementById('printSectionChecks');
+  const sections = document.querySelectorAll('.section[data-print-name]');
+  container.innerHTML = '';
+  sections.forEach(sec => {
+    const name = sec.dataset.printName;
+    if(!printConfig.sections.hasOwnProperty(name)) printConfig.sections[name] = true;
+    const lbl = document.createElement('label');
+    lbl.innerHTML = `<input type="checkbox" ${printConfig.sections[name]?'checked':''} onchange="printConfig.sections['${name}']=this.checked"> ${name}`;
+    container.appendChild(lbl);
+  });
+}
+
+function closePrintPanel(){
+  document.getElementById('printPanel').classList.remove('open');
+}
+
+function doPrint(){
+  // Apply section visibility
+  document.querySelectorAll('.section[data-print-name]').forEach(sec => {
+    const name = sec.dataset.printName;
+    sec.classList.toggle('print-hide', !printConfig.sections[name]);
+  });
+
+  // Apply other options
+  document.getElementById('printLegend').classList.toggle('print-hide', !document.getElementById('printOpt_legend').checked);
+  document.getElementById('printOverall').classList.toggle('print-hide', !document.getElementById('printOpt_overall').checked);
+  document.getElementById('printNotes').classList.toggle('print-hide', !document.getElementById('printOpt_notes').checked);
+
+  // Score circles visibility
+  document.querySelectorAll('.item-score').forEach(el => {
+    el.style.display = document.getElementById('printOpt_scorecircle').checked ? '' : 'none';
+  });
+
+  closePrintPanel();
+  window.print();
+
+  // Restore everything after print dialog
+  setTimeout(restoreAfterPrint, 1500);
+}
+
+function restoreAfterPrint(){
+  // Restore section visibility
+  document.querySelectorAll('.section[data-print-name]').forEach(sec => sec.classList.remove('print-hide'));
+  document.getElementById('printLegend').classList.remove('print-hide');
+  document.getElementById('printOverall').classList.remove('print-hide');
+  document.getElementById('printNotes').classList.remove('print-hide');
+  document.querySelectorAll('.item-score').forEach(el => el.style.display = '');
+}
+
+function printAllRecords(){
+  if(!loadRecords().length){showToast('无记录');return;}
+  // Open records then print
+  closeRecords();
+  // Render records into a hidden print area
+  // Actually just print the current form as-is with all records shown
+  showToast('请直接使用"打印此表"打印当前表单');
+}
+
+// ---- Print timestamp ----
+const now=new Date();
+const ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+const ts=ds+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+const pde=document.getElementById('printDate');
+if(pde) pde.textContent=ds;
+const pte=document.getElementById('printTimeSpan');
+if(pte) pte.textContent=ts;
+
+// Init
+document.getElementById('f_date').value=now.toISOString().slice(0,10);
+
+// ---- QR Code Panel ----
+function openQRPanel(){
+  document.getElementById('qrPanel').classList.add('open');
+  // Pre-fill with current page URL if online
+  const urlInput = document.getElementById('qrURLInput');
+  if(!urlInput.value && window.location.protocol !== 'file:'){
+    urlInput.value = window.location.href;
+  }
+}
+function closeQRPanel(){
+  document.getElementById('qrPanel').classList.remove('open');
+}
+
+let qrInstance = null;
+function generateQRFromURL(){
+  const url = document.getElementById('qrURLInput').value.trim();
+  const container = document.getElementById('qrCodeContainer');
+  const qrDiv = document.getElementById('qrCode');
+  const urlDisplay = document.getElementById('qrURLDisplay');
+  const status = document.getElementById('qrStatus');
+
+  if(!url){
+    status.textContent = '⚠️ 请输入网址';
+    status.style.color = '#A32D2D';
+    return;
+  }
+
+  // Basic URL validation
+  try { new URL(url); } catch(e){
+    status.textContent = '⚠️ 请输入有效的网址（以 http:// 或 https:// 开头）';
+    status.style.color = '#A32D2D';
+    return;
+  }
+
+  // Clear previous QR
+  qrDiv.innerHTML = '';
+  qrInstance = null;
+
+  // Generate QR code
+  qrInstance = new QRCode(qrDiv, {
+    text: url,
+    width: 220,
+    height: 220,
+    colorDark: '#185FA5',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  container.style.display = 'flex';
+  urlDisplay.textContent = url;
+  status.innerHTML = '<span style="color:#3B6D11">✅ 二维码已生成</span>';
+}
+
+function downloadQR(){
+  const qrDiv = document.getElementById('qrCode');
+  const canvas = qrDiv.querySelector('canvas');
+  if(!canvas){
+    showToast('请先生成二维码');
+    return;
+  }
+
+  // Create a larger canvas with padding and title
+  const padding = 40;
+  const titleHeight = 36;
+  const footerHeight = 28;
+  const size = canvas.width + padding * 2;
+  const totalH = size + titleHeight + footerHeight;
+
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width = size;
+  outCanvas.height = totalH;
+  const ctx = outCanvas.getContext('2d');
+
+  // White background with rounded corners effect
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, totalH);
+
+  // Title
+  ctx.fillStyle = '#185FA5';
+  ctx.font = 'bold 16px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('租房实地考察评分表', size / 2, padding - 8);
+
+  // QR code centered
+  ctx.drawImage(canvas, padding, padding + titleHeight - 4);
+
+  // Footer
+  ctx.fillStyle = '#999';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.fillText('微信扫码即可填写', size / 2, size + titleHeight + footerHeight - 4);
+
+  // Download
+  const link = document.createElement('a');
+  link.download = '租房评分表二维码.png';
+  link.href = outCanvas.toDataURL('image/png');
+  link.click();
+  showToast('二维码图片已下载');
+}
+
+function copyQRURL(){
+  const url = document.getElementById('qrURLInput').value.trim();
+  if(!url){ showToast('请先输入网址'); return; }
+  navigator.clipboard.writeText(url).then(() => showToast('链接已复制')).catch(() => showToast('复制失败'));
+}
+
+// ---- Export / Import Records ----
+function exportRecords(){
+  const records = loadRecords();
+  if(!records.length){
+    showToast('暂无记录可导出');
+    return;
+  }
+  const json = JSON.stringify(records, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `租房评分记录_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`已导出 ${records.length} 条记录`);
+}
+
+function importRecords(event){
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if(!Array.isArray(imported)){
+        showToast('文件格式错误');
+        return;
+      }
+      const existing = loadRecords();
+      const existingIds = new Set(existing.map(r => r.id));
+      let newCount = 0;
+      imported.forEach(record => {
+        if(record.id && !existingIds.has(record.id)){
+          existing.push(record);
+          newCount++;
+        }
+      });
+      localStorage.setItem('rental_inspect', JSON.stringify(existing));
+      showToast(`成功导入 ${newCount} 条新记录（共 ${imported.length} 条，${imported.length - newCount} 条重复已跳过）`);
+    } catch(err){
+      showToast('文件解析失败，请检查格式');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+</script>
+</body>
+</html>

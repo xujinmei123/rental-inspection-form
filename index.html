@@ -295,6 +295,14 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
   <!-- ===== Section 2: 水电燃气 ===== -->
   <div class="section" data-print-name="水电燃气费率">
     <div class="section-title"><span class="sec-num">2</span>水电燃气费率</div>
+    <div class="item-row" style="background:#f5f8fc;border-radius:6px;padding:8px 12px">
+      <div class="item-label">城市费率</div>
+      <div class="item-content">
+        <select class="sel" id="s_city"><option value="">选择城市自动填充</option><option>北京</option><option>上海</option><option>广州</option><option>深圳</option><option>杭州</option><option>南京</option><option>苏州</option><option>成都</option><option>重庆</option><option>武汉</option><option>天津</option><option>西安</option><option>长沙</option><option>郑州</option></select>
+        <span class="write-lbl" style="color:#999;font-size:10px">选择后自动填入当地居民阶梯一档价格与月均用量预估</span>
+      </div>
+      <div class="item-score"></div>
+    </div>
     <div class="item-row">
       <div class="item-label">电费单价</div>
       <div class="item-content">
@@ -735,6 +743,58 @@ document.querySelectorAll('.sel').forEach(sel => {
   sel.parentNode.insertBefore(list, sel.nextSibling);
 });
 
+// ---- City utility rate auto-fill ----
+const cityRates = {
+  '北京': {elecPrice:0.49,elecEst:180,waterPrice:5.00,gasType:'管道天然气',gasPrice:2.80,gasEst:15,netFee:79},
+  '上海': {elecPrice:0.62,elecEst:200,waterPrice:3.45,gasType:'管道天然气',gasPrice:3.02,gasEst:18,netFee:89},
+  '广州': {elecPrice:0.59,elecEst:220,waterPrice:2.55,gasType:'管道天然气',gasPrice:3.36,gasEst:20,netFee:79},
+  '深圳': {elecPrice:0.66,elecEst:230,waterPrice:2.67,gasType:'管道天然气',gasPrice:3.41,gasEst:18,netFee:79},
+  '杭州': {elecPrice:0.54,elecEst:200,waterPrice:2.95,gasType:'管道天然气',gasPrice:3.10,gasEst:16,netFee:69},
+  '南京': {elecPrice:0.52,elecEst:190,waterPrice:3.42,gasType:'管道天然气',gasPrice:2.96,gasEst:16,netFee:69},
+  '苏州': {elecPrice:0.56,elecEst:200,waterPrice:3.20,gasType:'管道天然气',gasPrice:2.98,gasEst:17,netFee:69},
+  '成都': {elecPrice:0.52,elecEst:180,waterPrice:2.98,gasType:'管道天然气',gasPrice:2.50,gasEst:15,netFee:59},
+  '重庆': {elecPrice:0.52,elecEst:170,waterPrice:3.10,gasType:'管道天然气',gasPrice:2.60,gasEst:14,netFee:59},
+  '武汉': {elecPrice:0.56,elecEst:190,waterPrice:2.85,gasType:'管道天然气',gasPrice:2.83,gasEst:16,netFee:69},
+  '天津': {elecPrice:0.49,elecEst:180,waterPrice:4.90,gasType:'管道天然气',gasPrice:2.86,gasEst:18,netFee:69},
+  '西安': {elecPrice:0.50,elecEst:170,waterPrice:3.80,gasType:'管道天然气',gasPrice:2.10,gasEst:14,netFee:59},
+  '长沙': {elecPrice:0.56,elecEst:180,waterPrice:2.88,gasType:'管道天然气',gasPrice:2.75,gasEst:15,netFee:69},
+  '郑州': {elecPrice:0.56,elecEst:180,waterPrice:4.40,gasType:'管道天然气',gasPrice:2.58,gasEst:15,netFee:69}
+};
+
+function fillCityRates(city){
+  const d = cityRates[city];
+  if(!d) return;
+  document.getElementById('s_elec').value = d.elecPrice;
+  document.getElementById('s_elec_type').value = '居民电';
+  syncTagList('s_elec_type');
+  document.getElementById('s_elec_est').value = d.elecEst;
+  document.getElementById('s_water').value = d.waterPrice;
+  document.getElementById('s_water_meter').value = '独立水表';
+  syncTagList('s_water_meter');
+  document.getElementById('s_gas').value = d.gasType;
+  syncTagList('s_gas');
+  document.getElementById('s_gas_price').value = d.gasPrice;
+  document.getElementById('s_net_fee').value = d.netFee;
+  showToast(city+' 居民费率已自动填入（一档标准）');
+}
+
+function syncTagList(selId){
+  const sel = document.getElementById(selId);
+  if(sel.classList.contains('sel') && sel.style.display==='none'){
+    const list = sel.nextElementSibling;
+    if(list && list.classList.contains('sel-tag-list')){
+      list.querySelectorAll('.sel-tag').forEach(t=>{
+        t.classList.toggle('sel-active', t.dataset.value===sel.value);
+      });
+    }
+  }
+}
+
+// Bind city select
+document.getElementById('s_city').addEventListener('change', function(){
+  if(this.value) fillCityRates(this.value);
+});
+
 // ---- Score inputs ----
 document.querySelectorAll('.score-input').forEach(input => {
   const clamp = () => {
@@ -865,6 +925,7 @@ function saveRecord(){
       s_water:getVal('s_water'),s_water_meter:getVal('s_water_meter'),
       s_gas:getVal('s_gas'),s_gas_price:getVal('s_gas_price'),
       s_net_isp:getVal('s_net_isp'),s_net_speed:getVal('s_net_speed'),s_net_fee:getVal('s_net_fee'),s_net_share:getVal('s_net_share'),
+      s_city:getVal('s_city'),
       s_dir:getVal('s_dir'),s_light:getVal('s_light'),
       n_street:getCK('n_street'),n_market:getCK('n_market'),n_school:getCK('n_school'),n_build:getCK('n_build'),n_elevator:getCK('n_elevator'),n_bar:getCK('n_bar'),
       s_wall:getVal('s_wall'),s_upstairs:getVal('s_upstairs'),s_wind:getVal('s_wind'),
@@ -937,6 +998,7 @@ function renderRecordsList(){
     if(f.s_work_time) commute+=` · 到公司${f.s_work_time}分钟`;
     // Fee summary
     let fees=[];
+    if(f.s_city) fees.push(f.s_city+'标准');
     if(f.s_elec) fees.push('电'+f.s_elec+'元/度');
     if(f.s_water) fees.push('水'+f.s_water+'元/吨');
     if(f.s_gas_price) fees.push('气'+f.s_gas_price+'元/方');

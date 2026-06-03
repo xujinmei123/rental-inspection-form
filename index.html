@@ -746,7 +746,7 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
 </div>
 
 <!-- Toast -->
-<div id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:#2c2c2a;color:#fff;padding:8px 18px;border-radius:8px;font-size:12px;transition:transform .25s;z-index:999"></div>
+<div id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:#2c2c2a;color:#fff;padding:8px 18px;border-radius:8px;font-size:12px;transition:transform .25s;z-index:999;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis"></div>
 
 </div><!-- /app -->
 
@@ -1532,8 +1532,9 @@ function getCK(id){return(document.getElementById(id)||{}).checked||false;}
 
 function showToast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2200);
+  t.textContent=msg;
+  t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>{t.style.transform='translateX(-50%) translateY(60px)';},2200);
 }
 
 function resetForm(){
@@ -1573,10 +1574,14 @@ function collectScores(){
 }
 
 function saveRecord(){
-  const name=getVal('f_name').trim();
-  if(!name){showToast('请填写房源名称');return;}
+  let name=getVal('f_name').trim();
+  // Auto-generate name if empty
+  if(!name){
+    const addr=getVal('f_addr').trim();
+    name = addr ? addr : '未命名 ' + new Date().toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('f_name').value = name;
+  }
   const overall=parseInt(getVal('f_overall'))||0;
-  if(!overall){showToast('请给综合评分');return;}
 
   const record={
     id:Date.now(),
@@ -1624,6 +1629,9 @@ function saveRecord(){
   records.unshift(record);
   localStorage.setItem('rental_inspect',JSON.stringify(records));
   showToast('保存成功！共 '+records.length+' 条记录');
+  // Auto-close share overlay on mobile after saving
+  const shareOverlay = document.getElementById('shareOverlay');
+  if(shareOverlay) shareOverlay.remove();
 }
 
 function loadRecords(){
@@ -2060,8 +2068,13 @@ function collectFormData() {
 
 // Generate share link and show share dialog
 function shareToDesktop() {
-  const name = getVal('f_name').trim();
-  if(!name) { showToast('请至少填写房源名称'); return; }
+  // Ensure we have a name
+  let name = getVal('f_name').trim();
+  if(!name) {
+    const addr = getVal('f_addr').trim();
+    name = addr ? addr : '未命名 ' + new Date().toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('f_name').value = name;
+  }
 
   const data = collectFormData();
   // Remove photos to keep URL short (photos can't transfer via URL)

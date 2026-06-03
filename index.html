@@ -173,7 +173,7 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
 .conclusion-tag.red{color:#A32D2D;background:#FCEBEB}
 .auto-score-badge{font-size:9px;color:#999;background:#f0f0eb;padding:1px 5px;border-radius:4px;margin-left:4px;cursor:help}
 .score-input.auto-filled{color:#185FA5;background:#E6F1FB;border-color:#185FA5}
-@media print{.conclusion-panel{break-inside:avoid}.conclusion-body{display:block!important}.conclusion-panel{border:1.5px solid #333!important;border-radius:0!important}}
+@media print{.conclusion-panel{break-inside:avoid}.conclusion-body{display:block!important}.conclusion-panel{border:1.5px solid #333!important;border-radius:0!important}#mobileTip{display:none!important}}
 
 /* Import banner responsive */
 @media(max-width:600px){
@@ -216,7 +216,7 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
     <button class="btn btn-primary" onclick="saveRecord()">保存记录</button>
     <button class="btn btn-primary" onclick="generateConclusion();document.getElementById('conclusionBody').classList.add('open');document.getElementById('conclusionToggle').textContent='点击收起 ▴';document.getElementById('conclusionPanel').scrollIntoView({behavior:'smooth'})">📊 生成评价</button>
     <button class="btn btn-outline" onclick="showRecords()">查看记录</button>
-    <button class="btn btn-outline" onclick="shareToDesktop()" id="btnShareDesktop" style="display:none" title="将填写的数据生成链接，在电脑端打开后可直接保存到记录">📤 发送给电脑</button>
+    <button class="btn btn-outline" onclick="shareToDesktop()" id="btnShareDesktop" title="将填写的数据生成链接，在其他设备打开后可直接保存到记录">📤 分享给其他设备</button>
     <button class="btn btn-outline" onclick="exportRecords()">📤 导出</button>
     <button class="btn btn-outline" onclick="document.getElementById('importFileInput').click()">📥 导入</button>
     <button class="btn btn-outline" onclick="resetForm()">清空</button>
@@ -224,7 +224,10 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
   </div>
 </div>
 
-<!-- ========== Print Header ========== -->
+<!-- Mobile Storage Tip -->
+<div id="mobileTip" style="display:none;background:linear-gradient(90deg,#FFF8E8,#FFF5DD);border-bottom:1px solid #EF9F27;padding:8px 14px;font-size:12px;color:#854F0B;text-align:center;line-height:1.5">
+  📱 手机端数据保存在本设备浏览器中 &nbsp;|&nbsp; 保存后可点 <strong onclick="shareToDesktop()" style="color:#185FA5;cursor:pointer;text-decoration:underline">📤 分享给电脑</strong> 同步记录
+</div>
 <div class="sheet-head" style="margin-bottom:0;border-radius:10px 10px 0 0">
   <h2>租房实地考察评分表</h2>
   <span class="sheet-badge" id="printDate"></span>
@@ -1632,6 +1635,40 @@ function saveRecord(){
   // Auto-close share overlay on mobile after saving
   const shareOverlay = document.getElementById('shareOverlay');
   if(shareOverlay) shareOverlay.remove();
+  // On mobile, prompt to send to desktop
+  if(isMobileDevice()){
+    setTimeout(()=>{
+      showSaveSuccessDialog(records.length);
+    }, 300);
+  }
+}
+
+// Show save-success dialog on mobile with option to send to desktop
+function showSaveSuccessDialog(count){
+  const overlay = document.createElement('div');
+  overlay.id = 'saveSuccessOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:960;display:flex;align-items:center;justify-content:center;padding:20px 16px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:380px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15)">
+      <div style="padding:20px;text-align:center">
+        <div style="font-size:40px;margin-bottom:8px">✅</div>
+        <div style="font-size:16px;font-weight:600;color:#3B6D11;margin-bottom:4px">保存成功！</div>
+        <div style="font-size:13px;color:#888">已保存到手机本地（共 ${count} 条记录）</div>
+      </div>
+      <div style="padding:0 20px 12px">
+        <div style="background:#FFF8E8;border:1px solid #EF9F27;border-radius:8px;padding:10px 12px;font-size:12px;color:#854F0B;line-height:1.6;margin-bottom:14px">
+          ⚠️ 手机端数据保存在本机浏览器中，<strong>电脑端无法直接查看</strong>。<br>
+          如需在电脑上查看，请点击下方"发送给电脑"。
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="document.getElementById('saveSuccessOverlay').remove();shareToDesktop()">📤 发送给电脑</button>
+        <button class="btn btn-outline" style="width:100%" onclick="document.getElementById('saveSuccessOverlay').remove()">知道了</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e){
+    if(e.target === overlay) overlay.remove();
+  });
 }
 
 function loadRecords(){
@@ -2014,10 +2051,11 @@ function isMobileDevice() {
   return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 }
 
-// Show "发送给电脑" button on mobile
+// "分享给其他设备" button is now visible on all devices
+// Show mobile storage tip on mobile devices
 if(isMobileDevice()) {
-  const btn = document.getElementById('btnShareDesktop');
-  if(btn) btn.style.display = '';
+  const tip = document.getElementById('mobileTip');
+  if(tip) tip.style.display = 'block';
 }
 
 // Collect all form data for sharing
@@ -2106,15 +2144,15 @@ function showShareDialog(url, compressed) {
   overlay.innerHTML = `
     <div style="background:#fff;border-radius:12px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15)">
       <div style="padding:14px 20px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:15px;font-weight:600;color:#185FA5">📤 发送给电脑保存</div>
+        <div style="font-size:15px;font-weight:600;color:#185FA5">📤 分享到其他设备</div>
         <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="document.getElementById('shareOverlay').remove()">✕</button>
       </div>
       <div style="padding:16px 20px;font-size:13px;color:#444;line-height:1.8">
         <div style="background:#FFF8E8;border:1px solid #EF9F27;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#854F0B;line-height:1.6">
           <strong>使用方法：</strong><br>
           1. 点击下方"复制链接"按钮<br>
-          2. 通过微信文件传输助手发给电脑<br>
-          3. 在电脑浏览器打开链接<br>
+          2. 通过微信/QQ/邮件等方式发给目标设备<br>
+          3. 在目标设备浏览器打开链接<br>
           4. 点击"导入到记录"即可保存
         </div>
         <div style="margin-bottom:12px">
@@ -2140,18 +2178,18 @@ function copyShareLink() {
   try {
     const success = document.execCommand('copy');
     if(success) {
-      showToast('链接已复制！发给电脑打开即可');
+      showToast('链接已复制！发送给目标设备打开即可');
     } else {
       // Fallback: use clipboard API
       navigator.clipboard.writeText(textarea.value).then(() => {
-        showToast('链接已复制！发给电脑打开即可');
+        showToast('链接已复制！发送给目标设备打开即可');
       }).catch(() => {
         showToast('复制失败，请长按文本框手动复制');
       });
     }
   } catch(e) {
     navigator.clipboard.writeText(textarea.value).then(() => {
-      showToast('链接已复制！发给电脑打开即可');
+      showToast('链接已复制！发送给目标设备打开即可');
     }).catch(() => {
       showToast('复制失败，请长按文本框手动复制');
     });
@@ -2185,7 +2223,7 @@ function showImportBanner(data) {
 
   banner.innerHTML = `
     <div style="font-size:13px;flex:1;min-width:200px">
-      <div style="font-weight:600;font-size:14px">📥 收到手机端分享的考察数据</div>
+      <div style="font-weight:600;font-size:14px">📥 收到其他设备分享的考察数据</div>
       <div style="font-size:12px;opacity:.85;margin-top:2px">房源：<strong>${data.name}</strong>${data.date ? ' · ' + data.date : ''}${data.addr ? ' · ' + data.addr : ''}</div>
     </div>
     <div style="display:flex;gap:8px;flex-shrink:0">

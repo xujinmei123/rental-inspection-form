@@ -89,8 +89,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
 .sel-tag:hover{border-color:#378ADD;color:#378ADD;background:#E6F1FB}
 .sel-tag.sel-active{font-weight:600;background:#FFF8E8;border-color:#EF9F27;color:#854F0B}
 .sel-tag.sel-active:hover{background:#FFF2D5}
-.sel-tag.sel-placeholder{color:#bbb;font-style:italic;cursor:default;background:transparent;border-style:dashed}
-.sel-tag.sel-placeholder:hover{border-color:#ccc;color:#bbb;background:transparent}
+.sel-tag.sel-placeholder{font-size:10px;font-weight:600;color:#185FA5;background:transparent;border:none;padding:0 6px 0 0;margin-right:2px;cursor:default;border-radius:0;letter-spacing:.5px}
+.sel-tag.sel-placeholder:hover{color:#185FA5;background:transparent}
+.sel-tag.sel-placeholder::before{content:'·';margin-right:4px;font-weight:700}
 
 /* Score input */
 .score-input{width:34px;height:28px;text-align:center;font-size:15px;font-weight:600;border:0.5px solid #d0cfc5;border-radius:4px;background:#fafaf7;color:#999;outline:none;transition:all .12s;font-family:inherit}

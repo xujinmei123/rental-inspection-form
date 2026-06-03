@@ -156,6 +156,26 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
 .print-footer{display:none}
 
 /* Print settings panel */
+.conclusion-panel{background:#fff;border:1px solid #d5d5cc;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.conclusion-head{padding:12px 20px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:#f8f8f4;border-bottom:0.5px solid #e0dfd8}
+.conclusion-body{padding:16px 20px;display:none}
+.conclusion-body.open{display:block}
+.conclusion-score-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:8px;margin-bottom:12px}
+.conclusion-score-big{font-size:32px;font-weight:700}
+.conclusion-score-label{font-size:12px;color:#666}
+.conclusion-section{margin-bottom:10px;padding:10px 14px;border-radius:6px;background:#f8f8f4}
+.conclusion-section-title{font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.conclusion-section-text{font-size:12px;color:#555;line-height:1.8}
+.conclusion-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:8px;font-weight:500;margin-right:4px}
+.conclusion-tag.green{color:#3B6D11;background:#EAF3DE}
+.conclusion-tag.blue{color:#185FA5;background:#E6F1FB}
+.conclusion-tag.yellow{color:#854F0B;background:#FAEEDA}
+.conclusion-tag.red{color:#A32D2D;background:#FCEBEB}
+.auto-score-badge{font-size:9px;color:#999;background:#f0f0eb;padding:1px 5px;border-radius:4px;margin-left:4px;cursor:help}
+.score-input.auto-filled{color:#185FA5;background:#E6F1FB;border-color:#185FA5}
+@media print{.conclusion-panel{break-inside:avoid}.conclusion-body{display:block!important}.conclusion-panel{border:1.5px solid #333!important;border-radius:0!important}}
+
+/* Print settings panel */
 .print-panel{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:950;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
 .print-panel.open{display:flex}
 .print-panel-box{background:#fff;border-radius:12px;width:100%;max-width:520px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15)}
@@ -186,6 +206,7 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
     <button class="btn btn-primary" onclick="openQRPanel()">📱 扫码填写</button>
     <button class="btn btn-primary" onclick="openPrintPanel()">🖨️ 打印设置</button>
     <button class="btn btn-primary" onclick="saveRecord()">保存记录</button>
+    <button class="btn btn-primary" onclick="generateConclusion();document.getElementById('conclusionBody').classList.add('open');document.getElementById('conclusionToggle').textContent='点击收起 ▴';document.getElementById('conclusionPanel').scrollIntoView({behavior:'smooth'})">📊 生成评价</button>
     <button class="btn btn-outline" onclick="showRecords()">查看记录</button>
     <button class="btn btn-outline" onclick="exportRecords()">📤 导出</button>
     <button class="btn btn-outline" onclick="document.getElementById('importFileInput').click()">📥 导入</button>
@@ -590,6 +611,19 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
     <input type="hidden" id="f_overall" value="0">
   </div>
 
+  <!-- ===== AI Conclusion Panel ===== -->
+  <div class="conclusion-panel" id="conclusionPanel">
+    <div class="conclusion-head" onclick="toggleConclusion()">
+      <span style="font-size:14px;font-weight:600;color:#185FA5">📊 智能评价与建议</span>
+      <span id="conclusionToggle" style="font-size:11px;color:#999;cursor:pointer">点击展开 ▾</span>
+    </div>
+    <div class="conclusion-body" id="conclusionBody">
+      <div id="conclusionContent" style="font-size:12px;color:#666;line-height:1.8">
+        <div style="text-align:center;padding:20px;color:#ccc">填写各项信息后将自动生成评价</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Notes -->
   <div class="notes-box" id="printNotes">
     <label>备注 / 补充说明</label>
@@ -708,7 +742,497 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
 </div><!-- /app -->
 
 <script>
-// ---- Convert selects to tag lists ----
+// ============================================================
+// AUTO-SCORING RULES: each rule maps select/checkbox IDs to a score field
+// Format: { trigger: [ids], score: Number, desc: String }
+// When any trigger changes, if ALL matching rules exist, set the score
+// ============================================================
+const autoScoreRules = {
+  // ---- 通勤 ----
+  's_subway_sc': [
+    { triggers: [{id:'s_subway_walk', op:'lte', val:5}, {id:'s_subway', op:'filled'}], score:5, desc:'地铁步行≤5分钟' },
+    { triggers: [{id:'s_subway_walk', op:'lte', val:10}, {id:'s_subway', op:'filled'}], score:4, desc:'地铁步行≤10分钟' },
+    { triggers: [{id:'s_subway_walk', op:'lte', val:15}, {id:'s_subway', op:'filled'}], score:3, desc:'地铁步行≤15分钟' },
+    { triggers: [{id:'s_subway_walk', op:'lte', val:25}, {id:'s_subway', op:'filled'}], score:2, desc:'地铁步行≤25分钟' },
+    { triggers: [{id:'s_subway_walk', op:'gt', val:25}], score:1, desc:'地铁步行>25分钟' },
+  ],
+  's_work_sc': [
+    { triggers: [{id:'s_work_time', op:'lte', val:20}], score:5, desc:'通勤≤20分钟' },
+    { triggers: [{id:'s_work_time', op:'lte', val:30}], score:4, desc:'通勤≤30分钟' },
+    { triggers: [{id:'s_work_time', op:'lte', val:45}], score:3, desc:'通勤≤45分钟' },
+    { triggers: [{id:'s_work_time', op:'lte', val:60}], score:2, desc:'通勤≤60分钟' },
+    { triggers: [{id:'s_work_time', op:'gt', val:60}], score:1, desc:'通勤>60分钟' },
+  ],
+  's_bus_sc': [
+    { triggers: [{id:'s_bus_3min', op:'checked'}], score:5, desc:'公交3分钟内' },
+    { triggers: [{id:'s_bus_10min', op:'checked'}], score:3, desc:'公交10分钟内' },
+  ],
+  // ---- 水电燃气 ----
+  's_elec_sc': [
+    { triggers: [{id:'s_elec_type', op:'eq', val:'居民电'}], score:5, desc:'居民电' },
+    { triggers: [{id:'s_elec_type', op:'eq', val:'商业电'}], score:1, desc:'商业电（很贵）' },
+  ],
+  's_water_sc': [
+    { triggers: [{id:'s_water_meter', op:'eq', val:'包在租金'}], score:5, desc:'水费含租金' },
+    { triggers: [{id:'s_water_meter', op:'eq', val:'独立水表'}], score:4, desc:'独立水表' },
+    { triggers: [{id:'s_water_meter', op:'eq', val:'均摊'}], score:2, desc:'水费均摊（不透明）' },
+  ],
+  's_gas_sc': [
+    { triggers: [{id:'s_gas', op:'eq', val:'无（纯电）'}], score:4, desc:'纯电无需燃气' },
+    { triggers: [{id:'s_gas', op:'eq', val:'管道天然气'}], score:5, desc:'管道天然气' },
+    { triggers: [{id:'s_gas', op:'eq', val:'罐装煤气'}], score:3, desc:'罐装煤气（麻烦）' },
+  ],
+  's_net_sc': [
+    { triggers: [{id:'s_net_share', op:'eq', val:'独享'}], score:5, desc:'独享网络' },
+    { triggers: [{id:'s_net_share', op:'eq', val:'合租共享'}], score:4, desc:'合租共享' },
+    { triggers: [{id:'s_net_share', op:'eq', val:'需自装'}], score:3, desc:'需自装' },
+  ],
+  // ---- 房屋环境 ----
+  's_dir_sc': [
+    { triggers: [{id:'s_dir', op:'eq', val:'南北通透'}], score:5, desc:'南北通透' },
+    { triggers: [{id:'s_dir', op:'eq', val:'朝南'}], score:4, desc:'朝南' },
+    { triggers: [{id:'s_dir', op:'eq', val:'朝东'}], score:4, desc:'朝东' },
+    { triggers: [{id:'s_dir', op:'eq', val:'朝西'}], score:2, desc:'朝西（西晒）' },
+    { triggers: [{id:'s_dir', op:'eq', val:'朝北'}], score:1, desc:'朝北（采光差）' },
+  ],
+  's_noise_sc': [
+    { triggers: [{id:'n_street', op:'checked'}], score:-1, penalty:true, desc:'临街噪音' },
+    { triggers: [{id:'n_bar', op:'checked'}], score:-1, penalty:true, desc:'夜市噪音' },
+    { triggers: [{id:'n_build', op:'checked'}], score:-1, penalty:true, desc:'工地噪音' },
+    { triggers: [{id:'n_market', op:'checked'}], score:-1, penalty:true, desc:'菜市场噪音' },
+    { triggers: [{id:'n_school', op:'checked'}], score:0, neutral:true, desc:'学校（上班一般影响小）' },
+  ],
+  's_sound_sc': [
+    { triggers: [{id:'s_wall', op:'eq', val:'混凝土（好）'},{id:'s_upstairs', op:'eq', val:'无邻居'}], score:5, desc:'混凝土墙+无楼上邻居' },
+    { triggers: [{id:'s_wall', op:'eq', val:'混凝土（好）'}], score:5, desc:'混凝土墙' },
+    { triggers: [{id:'s_wall', op:'eq', val:'砖墙（较好）'}], score:4, desc:'砖墙' },
+    { triggers: [{id:'s_wall', op:'eq', val:'轻体墙（差）'}], score:2, desc:'轻体墙' },
+    { triggers: [{id:'s_upstairs', op:'eq', val:'有小孩'}], score:0, penalty:true, desc:'楼上小孩' },
+  ],
+  's_wind_sc': [
+    { triggers: [{id:'s_wind', op:'eq', val:'穿堂风（好）'}], score:5, desc:'穿堂风' },
+    { triggers: [{id:'s_wind', op:'eq', val:'单面通风'}], score:3, desc:'单面通风' },
+    { triggers: [{id:'s_wind', op:'eq', val:'通风差'}], score:1, desc:'通风差' },
+  ],
+  // ---- 安全 ----
+  's_water_safe_sc': [
+    { triggers: [{id:'safe_ok', op:'checked'}], score:5, desc:'无异常' },
+    { triggers: [{id:'safe_mold', op:'checked'}], score:1, desc:'有霉斑' },
+    { triggers: [{id:'safe_water', op:'checked'}], score:2, desc:'有水渍' },
+    { triggers: [{id:'safe_drain', op:'checked'}], score:2, desc:'排水不畅' },
+    { triggers: [{id:'safe_leak', op:'checked'}], score:1, desc:'曾漏水' },
+  ],
+  's_elec_safe_sc': [
+    { triggers: [{id:'safe_eleok', op:'checked'}], score:5, desc:'无异常' },
+    { triggers: [{id:'safe_wire', op:'checked'}], score:1, desc:'电线老化' },
+  ],
+  's_pest_sc': [
+    { triggers: [{id:'pest_ok', op:'checked'}], score:5, desc:'干净无虫' },
+    { triggers: [{id:'pest_bug', op:'checked'}], score:1, desc:'有蟑螂/鼠迹' },
+    { triggers: [{id:'pest_smell', op:'checked'}], score:2, desc:'异味' },
+  ],
+  's_lock_sc': [
+    { triggers: [{id:'s_lock', op:'eq', val:'智能锁'},{id:'s_intercom', op:'checked'}], score:5, desc:'智能锁+门禁' },
+    { triggers: [{id:'s_lock', op:'eq', val:'智能锁'}], score:5, desc:'智能锁' },
+    { triggers: [{id:'s_lock', op:'eq', val:'机械锁'},{id:'s_intercom', op:'checked'}], score:4, desc:'机械锁+门禁' },
+    { triggers: [{id:'s_lock', op:'eq', val:'机械锁'}], score:3, desc:'机械锁' },
+    { triggers: [{id:'s_lock', op:'eq', val:'老式锁（需换）'}], score:1, desc:'老式锁需更换' },
+  ],
+  // ---- 设施 ----
+  's_hw_sc': [
+    { triggers: [{id:'s_hw', op:'eq', val:'燃气'},{id:'s_hw_time', op:'filled'}], score:4, desc:'燃气热水器' },
+    { triggers: [{id:'s_hw', op:'eq', val:'电热'},{id:'s_hw_time', op:'filled'}], score:3, desc:'电热水器' },
+    { triggers: [{id:'s_hw', op:'eq', val:'太阳能'}], score:3, desc:'太阳能' },
+    { triggers: [{id:'s_hw', op:'eq', val:'中央热水'}], score:5, desc:'中央热水' },
+  ],
+  's_signal_sc': [
+    { triggers: [{id:'s_signal', op:'eq', val:'全屋满格'}], score:5, desc:'全屋满格' },
+    { triggers: [{id:'s_signal', op:'eq', val:'大部分良好'}], score:4, desc:'大部分良好' },
+    { triggers: [{id:'s_signal', op:'eq', val:'部分弱'}], score:2, desc:'部分弱' },
+    { triggers: [{id:'s_signal', op:'eq', val:'很差'}], score:1, desc:'很差' },
+  ],
+  's_ac_sc': [
+    { triggers: [{id:'s_ac', op:'checked'},{id:'s_heat', op:'eq', val:'集中供暖'}], score:5, desc:'空调+集中供暖' },
+    { triggers: [{id:'s_ac', op:'checked'},{id:'s_heat', op:'eq', val:'自采暖'}], score:4, desc:'空调+自采暖' },
+    { triggers: [{id:'s_ac', op:'checked'},{id:'s_heat', op:'eq', val:'无暖气'}], score:3, desc:'有空调无暖气' },
+    { triggers: [{id:'s_heat', op:'eq', val:'集中供暖'}], score:4, desc:'集中供暖' },
+  ],
+  's_furn_sc': [], // computed dynamically based on checkbox count
+  's_bath_sc': [
+    { triggers: [{id:'s_bath_window', op:'checked'},{id:'s_bath_dry', op:'checked'},{id:'s_bath_count', op:'eq', val:'独卫2间'}], score:5, desc:'有窗+干湿分离+2卫' },
+    { triggers: [{id:'s_bath_window', op:'checked'},{id:'s_bath_dry', op:'checked'}], score:5, desc:'有窗+干湿分离' },
+    { triggers: [{id:'s_bath_window', op:'checked'},{id:'s_bath_count', op:'eq', val:'独卫1间'}], score:4, desc:'有窗+独卫' },
+    { triggers: [{id:'s_bath_dry', op:'checked'}], score:4, desc:'干湿分离' },
+    { triggers: [{id:'s_bath_count', op:'eq', val:'共用'}], score:2, desc:'共用卫生间' },
+  ],
+  's_store_sc': [
+    { triggers: [{id:'s_closet', op:'checked'},{id:'s_storage', op:'checked'}], score:5, desc:'衣柜+储物间' },
+    { triggers: [{id:'s_closet', op:'checked'}], score:4, desc:'有衣柜' },
+    { triggers: [{id:'s_storage', op:'checked'}], score:3, desc:'有储物间' },
+  ],
+  // ---- 物业 ----
+  's_prop_sc': [
+    { triggers: [{id:'s_prop', op:'eq', val:'优秀'}], score:5, desc:'物业优秀' },
+    { triggers: [{id:'s_prop', op:'eq', val:'一般'}], score:3, desc:'物业一般' },
+    { triggers: [{id:'s_prop', op:'eq', val:'较差'}], score:1, desc:'物业较差' },
+    { triggers: [{id:'s_prop', op:'eq', val:'无物业'}], score:2, desc:'无物业' },
+  ],
+  's_inc_sc': [
+    { triggers: [{id:'s_inc_prop', op:'eq', val:'包含在租金'},{id:'s_inc_net', op:'eq', val:'包含在租金'}], score:5, desc:'物业+宽带均含租' },
+    { triggers: [{id:'s_inc_prop', op:'eq', val:'房东另付'},{id:'s_inc_net', op:'eq', val:'房东另付'}], score:5, desc:'物业+宽带房东付' },
+    { triggers: [{id:'s_inc_prop', op:'eq', val:'包含在租金'}], score:4, desc:'物业含租' },
+    { triggers: [{id:'s_inc_prop', op:'eq', val:'租客自付'}], score:2, desc:'租客付物业' },
+    { triggers: [{id:'s_inc_net', op:'eq', val:'租客自付'}], score:3, desc:'租客付宽带' },
+  ],
+  's_bill_sc': [
+    { triggers: [{id:'s_bill', op:'eq', val:'直接缴给供应商'},{id:'s_bill_check', op:'checked'}], score:5, desc:'直缴+可查账' },
+    { triggers: [{id:'s_bill', op:'eq', val:'直接缴给供应商'}], score:4, desc:'直缴供应商' },
+    { triggers: [{id:'s_bill', op:'eq', val:'给房东代缴'},{id:'s_bill_check', op:'checked'}], score:3, desc:'房东代缴但可查账' },
+    { triggers: [{id:'s_bill', op:'eq', val:'给房东代缴'}], score:2, desc:'房东代缴（不透明）' },
+    { triggers: [{id:'s_bill', op:'eq', val:'包含在租金'}], score:4, desc:'含租金' },
+  ],
+  's_ll_sc': [
+    { triggers: [{id:'s_ll_easy', op:'checked'},{id:'s_ll_repair', op:'checked'},{id:'s_ll_photo', op:'checked'}], score:5, desc:'沟通好+维修明确+留档' },
+    { triggers: [{id:'s_ll_easy', op:'checked'},{id:'s_ll_repair', op:'checked'}], score:4, desc:'沟通好+维修明确' },
+    { triggers: [{id:'s_ll_easy', op:'checked'}], score:4, desc:'沟通顺畅' },
+    { triggers: [{id:'s_ll_photo', op:'checked'}], score:4, desc:'已留档' },
+  ],
+  's_ret_sc': [
+    { triggers: [{id:'s_ret_normal', op:'checked'},{id:'s_ret_clean', op:'checked'},{id:'s_ret_trans', op:'checked'}], score:5, desc:'正常损耗不扣+提前通知+可转租' },
+    { triggers: [{id:'s_ret_normal', op:'checked'},{id:'s_ret_clean', op:'checked'}], score:4, desc:'正常损耗不扣+提前通知' },
+    { triggers: [{id:'s_ret_normal', op:'checked'}], score:4, desc:'正常损耗不扣押金' },
+    { triggers: [{id:'s_ret_trans', op:'checked'}], score:4, desc:'可转租' },
+  ],
+};
+
+// ============================================================
+// FURNITURE SCORING: based on count of checked items
+// ============================================================
+const furnItemIds = ['fur_fridge','fur_washer','fur_tv','fur_microwave','fur_oven','fur_purifier','fur_aclean','fur_dryer','fur_stove','fur_hood','fur_rice','fur_kettle','fur_bed','fur_mattress','fur_sofa','fur_desk','fur_chair','fur_wardrobe','fur_shoe','fur_cabinet','fur_curtain','fur_mirror','fur_wifi','fur_iron','fur_vacuum','fur_apt','fur_balcony','fur_exhaust'];
+
+function autoScoreFurniture(){
+  const count = furnItemIds.filter(id => (document.getElementById(id)||{}).checked).length;
+  let score = 0;
+  if(count >= 20) score = 5;
+  else if(count >= 15) score = 4;
+  else if(count >= 10) score = 3;
+  else if(count >= 5) score = 2;
+  else if(count >= 1) score = 1;
+  autoFillScore('s_furn_sc', score, count+'件');
+}
+
+// ============================================================
+// NOISE SCORING: special multi-source penalty logic
+// ============================================================
+function autoScoreNoise(){
+  const sources = ['n_street','n_market','n_school','n_build','n_elevator','n_bar'];
+  const checked = sources.filter(id => (document.getElementById(id)||{}).checked);
+  const count = checked.length;
+  let score = 5;
+  if(count >= 3) score = 1;
+  else if(count >= 2) score = 2;
+  else if(count === 1) {
+    // Which source?
+    if(checked[0] === 'n_elevator') score = 4; // elevator is mild
+    else if(checked[0] === 'n_school') score = 3; // school = daytime noise
+    else score = 2;
+  }
+  autoFillScore('s_noise_sc', score, count?'噪音源:'+checked.length:'安静');
+}
+
+// ============================================================
+// SOUND SCORING: special wall + upstairs combined logic
+// ============================================================
+function autoScoreSound(){
+  const wall = getVal('s_wall');
+  const up = getVal('s_upstairs');
+  let score = 0;
+  if(wall === '混凝土（好）' && (up === '无邻居' || !up)) score = 5;
+  else if(wall === '混凝土（好）' && up === '普通住户') score = 4;
+  else if(wall === '混凝土（好）' && up === '有小孩') score = 3;
+  else if(wall === '砖墙（较好）' && (up === '无邻居' || !up)) score = 4;
+  else if(wall === '砖墙（较好）' && up === '普通住户') score = 3;
+  else if(wall === '砖墙（较好）' && up === '有小孩') score = 2;
+  else if(wall === '轻体墙（差）' && (up === '无邻居' || !up)) score = 2;
+  else if(wall === '轻体墙（差）' && up === '普通住户') score = 1;
+  else if(wall === '轻体墙（差）' && up === '有小孩') score = 1;
+  autoFillScore('s_sound_sc', score, (wall||'未填')+(up?' + '+up:''));
+}
+
+// ============================================================
+// CORE AUTO-SCORE ENGINE
+// ============================================================
+function checkTrigger(trigger) {
+  const el = document.getElementById(trigger.id);
+  if(!el) return false;
+  const val = el.value || '';
+  if(trigger.op === 'eq') return val === trigger.val;
+  if(trigger.op === 'filled') return val.trim() !== '';
+  if(trigger.op === 'checked') return el.checked;
+  if(trigger.op === 'lte') {
+    const n = parseFloat(val);
+    return !isNaN(n) && n <= trigger.val;
+  }
+  if(trigger.op === 'gt') {
+    const n = parseFloat(val);
+    return !isNaN(n) && n > trigger.val;
+  }
+  return false;
+}
+
+function autoFillScore(scoreId, score, desc) {
+  const input = document.querySelector('.score-input[data-key="'+scoreId+'"]');
+  if(!input) return;
+  if(score > 0) {
+    if(!input.value) { // only auto-fill if user hasn't manually entered
+      input.value = score;
+      input.classList.add('filled');
+      input.classList.add('auto-filled');
+    }
+  }
+  updateAvgScore();
+  generateConclusion();
+}
+
+function runAutoScoring(changedId) {
+  // Find which score fields might be affected
+  const affectedScores = [];
+  for(const [scoreId, rules] of Object.entries(autoScoreRules)) {
+    for(const rule of rules) {
+      for(const trig of rule.triggers) {
+        if(trig.id === changedId || (trig.id === 'n_street'||trig.id==='n_market'||trig.id==='n_school'||trig.id==='n_build'||trig.id==='n_elevator'||trig.id==='n_bar') && changedId.startsWith('n_')) {
+          affectedScores.push(scoreId);
+          break;
+        }
+      }
+      if(affectedScores.includes(scoreId)) break;
+    }
+  }
+  // Also check furniture
+  if(furnItemIds.includes(changedId)) affectedScores.push('s_furn_sc');
+  // Check noise
+  if(['n_street','n_market','n_school','n_build','n_elevator','n_bar'].includes(changedId)) affectedScores.push('s_noise_sc');
+  // Check sound
+  if(['s_wall','s_upstairs'].includes(changedId)) affectedScores.push('s_sound_sc');
+
+  const unique = [...new Set(affectedScores)];
+  unique.forEach(scoreId => {
+    if(scoreId === 's_furn_sc') { autoScoreFurniture(); return; }
+    if(scoreId === 's_noise_sc') { autoScoreNoise(); return; }
+    if(scoreId === 's_sound_sc') { autoScoreSound(); return; }
+    const rules = autoScoreRules[scoreId] || [];
+    let bestScore = 0;
+    let bestDesc = '';
+    for(const rule of rules) {
+      if(rule.penalty || rule.neutral) continue; // skip penalty rules in main scoring
+      const allMatch = rule.triggers.every(t => checkTrigger(t));
+      if(allMatch && rule.score > bestScore) {
+        bestScore = rule.score;
+        bestDesc = rule.desc;
+      }
+    }
+    autoFillScore(scoreId, bestScore, bestDesc);
+  });
+}
+
+// ============================================================
+// AUTO-SCORING: compute utility estimate and score electricity
+// ============================================================
+function calcUtilityEstimate() {
+  const city = getVal('s_city');
+  const houseType = getVal('f_type');
+  const elecType = getVal('s_elec_type');
+  const waterMeter = getVal('s_water_meter');
+
+  if(!city) return;
+
+  const d = cityRates[city];
+  if(!d) return;
+
+  // Parse room type for multiplier
+  let roomMult = 1;
+  let roomLabel = '';
+  if(/三/.test(houseType)) { roomMult = 1.3; roomLabel = '三房'; }
+  else if(/两|2/.test(houseType) || /二/.test(houseType)) { roomMult = 1; roomLabel = '两房'; }
+  else if(/一|1/.test(houseType)) { roomMult = 0.7; roomLabel = '一房'; }
+  else if(/单间|开间|公寓/.test(houseType)) { roomMult = 0.5; roomLabel = '单间'; }
+  else { roomMult = 1; roomLabel = ''; }
+
+  // Electricity
+  let elecPrice = parseFloat(document.getElementById('s_elec').value) || d.elecPrice;
+  let elecEst = Math.round(d.elecEst * roomMult);
+  document.getElementById('s_elec_est').value = elecEst;
+
+  // Water
+  let waterEst = Math.round(5 * roomMult); // ~5 tons/month base for 1 person
+  let waterCost = Math.round(document.getElementById('s_water').value * waterEst * 100) / 100;
+
+  // Gas
+  let gasEst = Math.round((d.gasEst || 15) * roomMult);
+  let gasCost = Math.round(document.getElementById('s_gas_price').value * gasEst * 100) / 100;
+
+  // Monthly total estimate
+  let elecCost = Math.round(elecPrice * elecEst * 100) / 100;
+  let netFee = parseInt(document.getElementById('s_net_fee').value) || d.netFee;
+  let totalUtil = Math.round((elecCost + waterCost + gasCost + netFee) * 100) / 100;
+
+  // Store in hidden fields for conclusion
+  window._utilEstimate = {
+    city, roomLabel, elecPrice, elecEst, elecCost,
+    waterPrice: document.getElementById('s_water').value, waterEst, waterCost,
+    gasType: getVal('s_gas'), gasPrice: document.getElementById('s_gas_price').value, gasEst, gasCost,
+    netFee, totalUtil, roomMult, elecType, waterMeter
+  };
+
+  generateConclusion();
+}
+
+// ============================================================
+// CONCLUSION GENERATION
+// ============================================================
+function toggleConclusion() {
+  const body = document.getElementById('conclusionBody');
+  const toggle = document.getElementById('conclusionToggle');
+  body.classList.toggle('open');
+  toggle.textContent = body.classList.contains('open') ? '点击收起 ▴' : '点击展开 ▾';
+}
+
+function generateConclusion() {
+  const container = document.getElementById('conclusionContent');
+  const scores = collectScores();
+  const vals = Object.values(scores).filter(v => v > 0);
+  const avg = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10 : 0;
+
+  if(vals.length < 3) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:#ccc">已填 ' + vals.length + ' 项评分，至少填写 3 项后将自动生成评价</div>';
+    return;
+  }
+
+  const ue = window._utilEstimate || {};
+  let html = '';
+
+  // Score summary bar
+  let barColor = '#ccc', barBg = '#f0f0eb', barText = '数据不足';
+  if(avg >= 4) { barColor = '#3B6D11'; barBg = '#EAF3DE'; barText = '推荐出租'; }
+  else if(avg >= 3) { barColor = '#185FA5'; barBg = '#E6F1FB'; barText = '可以租，需权衡'; }
+  else if(avg >= 2) { barColor = '#EF9F27'; barBg = '#FAEEDA'; barText = '谨慎考虑'; }
+  else if(avg > 0) { barColor = '#A32D2D'; barBg = '#FCEBEB'; barText = '不建议租'; }
+
+  html += '<div class="conclusion-score-bar" style="background:'+barBg+'">';
+  html += '<div class="conclusion-score-big" style="color:'+barColor+'">'+avg+'</div>';
+  html += '<div><div class="conclusion-score-label" style="font-weight:600;color:'+barColor+'">'+barText+'</div>';
+  html += '<div class="conclusion-score-label">共 '+vals.length+' 项评分</div></div></div>';
+
+  // Section analysis
+  const sectionNames = {
+    's_subway_sc,s_work_sc,s_bus_sc': {name:'🚇 通勤交通', icon:'🚇'},
+    's_elec_sc,s_water_sc,s_gas_sc,s_net_sc': {name:'💡 水电燃气', icon:'💡'},
+    's_dir_sc,s_noise_sc,s_sound_sc,s_wind_sc': {name:'🏠 房屋环境', icon:'🏠'},
+    's_water_safe_sc,s_elec_safe_sc,s_pest_sc,s_lock_sc': {name:'🔒 安全检查', icon:'🔒'},
+    's_hw_sc,s_signal_sc,s_ac_sc,s_furn_sc,s_bath_sc,s_store_sc': {name:'🛋️ 设施舒适', icon:'🛋️'},
+    's_prop_sc,s_inc_sc,s_bill_sc,s_ll_sc,s_ret_sc': {name:'📝 物业合同', icon:'📝'}
+  };
+
+  let strengths = [], weaknesses = [];
+
+  for(const [keys, info] of Object.entries(sectionNames)) {
+    const keyList = keys.split(',');
+    const sectionScores = keyList.map(k => scores[k]).filter(v => v > 0);
+    const sAvg = sectionScores.length ? Math.round(sectionScores.reduce((a,b)=>a+b,0)/sectionScores.length*10)/10 : 0;
+
+    let tag = '';
+    if(sAvg >= 4) tag = '<span class="conclusion-tag green">优秀</span>';
+    else if(sAvg >= 3) tag = '<span class="conclusion-tag blue">一般</span>';
+    else if(sAvg >= 2) tag = '<span class="conclusion-tag yellow">较差</span>';
+    else if(sAvg > 0) tag = '<span class="conclusion-tag red">很差</span>';
+
+    if(sAvg >= 4.5 && sectionScores.length >= 2) strengths.push(info.name);
+    if(sAvg <= 2 && sectionScores.length >= 1) weaknesses.push(info.name);
+
+    if(sectionScores.length > 0) {
+      html += '<div class="conclusion-section">';
+      html += '<div class="conclusion-section-title">'+info.name+' '+tag+' <span style="font-size:11px;color:#999">均分 '+sAvg+'</span></div>';
+      // List low-scoring items
+      keyList.forEach(k => {
+        const v = scores[k];
+        if(v > 0 && v <= 2) {
+          const input = document.querySelector('.score-input[data-key="'+k+'"]');
+          const row = input ? input.closest('.item-row') : null;
+          const label = row ? row.querySelector('.item-label') : null;
+          if(label) html += '<div style="font-size:11px;color:#c44">⚠️ '+label.textContent.trim()+'：'+v+'分（需关注）</div>';
+        }
+      });
+      html += '</div>';
+    }
+  }
+
+  // Utility cost estimate
+  if(ue.totalUtil && ue.city) {
+    html += '<div class="conclusion-section" style="background:#E6F1FB">';
+    html += '<div class="conclusion-section-title" style="color:#185FA5">💰 预估月度杂费</div>';
+    html += '<div class="conclusion-section-text">';
+    html += '<div>城市：'+ue.city+(ue.roomLabel?' · 房型：'+ue.roomLabel:'')+'</div>';
+    if(ue.elecCost > 0) html += '<div>⚡ 电费：约 '+ue.elecCost+' 元/月（'+ue.elecEst+'度 × '+ue.elecPrice+'元）</div>';
+    if(ue.waterCost > 0) html += '<div>💧 水费：约 '+ue.waterCost+' 元/月（'+ue.waterEst+'吨 × '+ue.waterPrice+'元）</div>';
+    if(ue.gasCost > 0 && ue.gasType !== '无（纯电）') html += '<div>🔥 燃气：约 '+ue.gasCost+' 元/月（'+ue.gasEst+'方 × '+ue.gasPrice+'元）</div>';
+    if(ue.netFee > 0) html += '<div>🌐 宽带：约 '+ue.netFee+' 元/月</div>';
+    html += '<div style="font-weight:600;color:#185FA5;margin-top:4px">📦 杂费合计：约 '+ue.totalUtil+' 元/月</div>';
+    const rent = parseInt(getVal('f_rent'));
+    if(rent > 0) {
+      const total = rent + ue.totalUtil;
+      const pct = Math.round(ue.totalUtil / rent * 100);
+      html += '<div style="font-size:11px;color:#888;margin-top:2px">租金 ¥'+rent+' + 杂费 ¥'+ue.totalUtil+' = 月支出 ¥'+total+(pct>0?'（杂费占租金'+pct+'%）':'')+'</div>';
+    }
+    html += '</div></div>';
+  }
+
+  // Strengths & Weaknesses
+  if(strengths.length || weaknesses.length) {
+    html += '<div class="conclusion-section">';
+    html += '<div class="conclusion-section-title">📌 综合评价</div>';
+    html += '<div class="conclusion-section-text">';
+    if(strengths.length) html += '<div style="color:#3B6D11">✅ 优势板块：'+strengths.join('、')+'</div>';
+    if(weaknesses.length) html += '<div style="color:#A32D2D">❌ 需关注：'+weaknesses.join('、')+'</div>';
+    html += '</div></div>';
+  }
+
+  // Advice
+  html += '<div class="conclusion-section" style="background:#FFF8E8">';
+  html += '<div class="conclusion-section-title" style="color:#854F0B">💡 租房建议</div>';
+  html += '<div class="conclusion-section-text">';
+
+  const advice = [];
+  if(scores.s_work_sc > 0 && scores.s_work_sc <= 2) advice.push('通勤时间过长（>45分钟），建议优先考虑更近的房源，长期通勤严重影响生活质量');
+  if(scores.s_dir_sc > 0 && scores.s_dir_sc <= 2) advice.push('朝向较差（西晒/朝北），采光和通风可能不理想，夏天西晒房间会很热，冬天朝北房间阴冷');
+  if(scores.s_noise_sc > 0 && scores.s_noise_sc <= 2) advice.push('周边噪音源较多，建议实际到访听一下白天和晚上的噪音情况');
+  if(scores.s_water_safe_sc > 0 && scores.s_water_safe_sc <= 2) advice.push('房屋有水患风险（霉斑/水渍/漏水），建议仔细检查卫生间、窗台、墙角');
+  if(scores.s_pest_sc > 0 && scores.s_pest_sc <= 2) advice.push('存在虫害/异味问题，这是卫生状况的信号，建议了解整栋楼的情况');
+  if(scores.s_lock_sc > 0 && scores.s_lock_sc <= 2) advice.push('门锁安全性不足，入住后建议自行更换智能锁（约200-500元）');
+  if(scores.s_ac_sc > 0 && scores.s_ac_sc <= 2) advice.push('空调/暖气配置不足，冬天或夏天居住体验会很差');
+  if(scores.s_furn_sc > 0 && scores.s_furn_sc <= 2) advice.push('家具家电配置偏少，入住后需额外购置，建议核算预算');
+  if(scores.s_elec_sc > 0 && scores.s_elec_sc <= 2) advice.push('电费单价为商业电，是居民电的1.5-2倍，月电费将显著增加');
+  if(scores.s_water_sc > 0 && scores.s_water_sc <= 2) advice.push('水费均摊方式不透明，实际费用可能高于预期');
+  if(scores.s_bill_sc > 0 && scores.s_bill_sc <= 2) advice.push('缴费方式不透明，建议入住前与房东确认账单查看方式');
+  if(scores.s_ll_sc > 0 && scores.s_ll_sc <= 2) advice.push('房东沟通印象不佳，后期维修、退租等可能产生纠纷，建议慎重考虑');
+  if(scores.s_ret_sc > 0 && scores.s_ret_sc <= 2) advice.push('退租/押金条款不够友好，建议入住前要求写入合同并拍照留档');
+  if(ue.elecType === '商业电') advice.push('⚠️ 此房为商业用电，电费单价远高于居民用电（通常1-1.5元/度），月电费约'+ue.elecCost+'元，长期居住成本较高');
+  if(scores.s_elec_safe_sc > 0 && scores.s_elec_safe_sc <= 2) advice.push('电线老化存在安全隐患，建议要求房东整改或另寻房源');
+
+  if(advice.length === 0) {
+    if(avg >= 4) advice.push('各项评分整体优秀，建议尽快签约锁定房源');
+    else if(avg >= 3) advice.push('整体尚可，关注上述需改善的板块即可入住');
+    else advice.push('建议继续看房，等待更合适的房源');
+  }
+
+  advice.forEach(a => html += '<div style="margin-bottom:3px">→ '+a+'</div>');
+  html += '</div></div>';
+
+  container.innerHTML = html;
+}
+
+// ============================================================
+// Convert selects to tag lists (enhanced with auto-score binding)
+// ============================================================
 document.querySelectorAll('.sel').forEach(sel => {
   const list = document.createElement('div');
   list.className = 'sel-tag-list';
@@ -729,11 +1253,12 @@ document.querySelectorAll('.sel').forEach(sel => {
 
     if(!isPlaceholder) {
       tag.onclick = () => {
-        // Update select value
         sel.value = opt.value;
-        // Update tag visuals
         list.querySelectorAll('.sel-tag').forEach(t => t.classList.remove('sel-active'));
         tag.classList.add('sel-active');
+        // Trigger auto-scoring
+        runAutoScoring(sel.id);
+        calcUtilityEstimate();
       };
     }
 
@@ -867,6 +1392,12 @@ function fillCityRates(city){
   syncTagList('s_gas');
   document.getElementById('s_gas_price').value = d.gasPrice;
   document.getElementById('s_net_fee').value = d.netFee;
+  // Auto-score utility items
+  runAutoScoring('s_elec_type');
+  runAutoScoring('s_water_meter');
+  runAutoScoring('s_gas');
+  runAutoScoring('s_net_share');
+  calcUtilityEstimate();
   showToast(city+' 居民费率已自动填入（一档标准）');
 }
 
@@ -887,13 +1418,42 @@ document.getElementById('s_city').addEventListener('change', function(){
   if(this.value) fillCityRates(this.value);
 });
 
-// ---- Score inputs ----
+// ---- Bind ALL checkboxes and inputs to auto-scoring ----
+// All checkboxes trigger auto-scoring
+document.querySelectorAll('input[type="checkbox"]').forEach(ck => {
+  ck.addEventListener('change', () => {
+    runAutoScoring(ck.id);
+    generateConclusion();
+  });
+});
+// Number inputs that are NOT score inputs trigger auto-scoring
+document.querySelectorAll('.write[type="number"]').forEach(inp => {
+  inp.addEventListener('input', () => {
+    runAutoScoring(inp.id);
+    calcUtilityEstimate();
+  });
+  inp.addEventListener('change', () => {
+    runAutoScoring(inp.id);
+    calcUtilityEstimate();
+  });
+});
+// Room type input triggers utility estimate
+document.getElementById('f_type').addEventListener('input', calcUtilityEstimate);
+document.getElementById('f_type').addEventListener('change', calcUtilityEstimate);
+// Rent input triggers conclusion (for cost calculation)
+document.getElementById('f_rent').addEventListener('input', () => { calcUtilityEstimate(); generateConclusion(); });
+document.getElementById('f_rent').addEventListener('change', () => { calcUtilityEstimate(); generateConclusion(); });
+
+// ---- Score inputs (manual override allowed) ----
 document.querySelectorAll('.score-input').forEach(input => {
   const clamp = () => {
     let v = parseInt(input.value);
     if (v && (v < 1 || v > 5)) input.value = Math.min(5, Math.max(1, v));
     input.classList.toggle('filled', input.value >= 1 && input.value <= 5);
+    // User manually typed → remove auto-filled indicator
+    if(input.value) input.classList.remove('auto-filled');
     updateAvgScore();
+    generateConclusion();
   };
   input.addEventListener('input', clamp);
   input.addEventListener('change', clamp);
@@ -915,6 +1475,7 @@ ovSelect.addEventListener('change', () => {
     el.style.color = '#999';
   }
   updateAvgScore();
+  generateConclusion();
 });
 
 // Auto-calculate average score from all item scores
@@ -932,6 +1493,7 @@ function updateAvgScore(){
     else if(avg>0){verdictEl.textContent='建议放弃';verdictEl.style.color='#A32D2D';verdictEl.style.background='#FCEBEB';verdictEl.style.display='inline'}
     else{verdictEl.style.display='none'}
   }
+  generateConclusion();
 }
 
 // ---- Photos ----
@@ -981,6 +1543,11 @@ function resetForm(){
     list.querySelectorAll('.sel-tag').forEach(t=>t.classList.remove('sel-active'));
   });
   currentPhotos=[];renderPhotoPreviews();
+  document.querySelectorAll('.score-input').forEach(e=>{e.classList.remove('auto-filled');});
+  window._utilEstimate = {};
+  generateConclusion();
+  document.getElementById('conclusionBody').classList.remove('open');
+  document.getElementById('conclusionToggle').textContent='点击展开 ▾';
   showToast('已清空');
 }
 
@@ -1009,6 +1576,8 @@ function saveRecord(){
     type:getVal('f_type'), floor:getVal('f_floor'), area:getVal('f_area'),
     overall, notes:getVal('f_notes'), photos:[...currentPhotos],
     scores:collectScores(),
+    utilEstimate: window._utilEstimate || null,
+    conclusionHtml: document.getElementById('conclusionContent').innerHTML,
     fields:{
       s_subway:getVal('s_subway'),s_subway_walk:getVal('s_subway_walk'),
       s_work_dist:getVal('s_work_dist'),s_work_time:getVal('s_work_time'),s_work_way:getVal('s_work_way'),
@@ -1095,6 +1664,13 @@ function renderRecordsList(){
     if(f.s_water) fees.push('水'+f.s_water+'元/吨');
     if(f.s_gas_price) fees.push('气'+f.s_gas_price+'元/方');
 
+    // Utility estimate display
+    let utilSummary = '';
+    if(r.utilEstimate && r.utilEstimate.totalUtil) {
+      const ue = r.utilEstimate;
+      utilSummary = '<div><strong>预估杂费：</strong>约 ¥'+ue.totalUtil+'/月（电'+ue.elecCost+'+水'+ue.waterCost+'+气'+ue.gasCost+'+宽带'+ue.netFee+'）</div>';
+    }
+
     return `<div style="border:0.5px solid #e0e0d8;border-radius:8px;margin-bottom:10px;overflow:hidden">
       <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
         <div>
@@ -1105,6 +1681,7 @@ function renderRecordsList(){
       </div>
       <div style="display:none;padding:10px 14px;border-top:0.5px solid #f0f0e8;font-size:12px;color:#555;line-height:2">
         ${fees.length?'<div><strong>费率：</strong>'+fees.join(' / ')+'</div>':''}
+        ${utilSummary}
         ${f.s_dir?'<div><strong>朝向：</strong>'+f.s_dir+' · '+f.s_light+'</div>':''}
         ${f.s_hw?'<div><strong>热水：</strong>'+f.s_hw+(f.s_hw_vol?' '+f.s_hw_vol+'L':'')+(f.s_hw_time?' 出热'+f.s_hw_time+'秒':'')+'</div>':''}
         ${f.s_signal?'<div><strong>信号：</strong>'+f.s_signal+'</div>':''}
@@ -1173,6 +1750,8 @@ function editRecord(id){
     input.value=sc[k]||'';
     input.classList.toggle('filled', sc[k]>=1 && sc[k]<=5);
   });
+  // Restore utility estimate
+  if(r.utilEstimate) window._utilEstimate = r.utilEstimate;
   deleteRecord(id);
   closeRecords();
   window.scrollTo({top:0,behavior:'smooth'});

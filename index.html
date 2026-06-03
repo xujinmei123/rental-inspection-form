@@ -537,7 +537,9 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
       <div class="item-label">卫生间</div>
       <div class="item-content">
         <label class="ck"><input type="checkbox" id="s_bath_window"> 有窗</label>
+        <label class="ck"><input type="checkbox" id="s_bath_nowin" style="color:#A32D2D"> 无窗</label>
         <label class="ck"><input type="checkbox" id="s_bath_dry"> 干湿分离</label>
+        <label class="ck"><input type="checkbox" id="s_bath_nodry" style="color:#A32D2D"> 不干湿分离</label>
         <select class="sel" id="s_bath_count"><option value="">数量</option><option>独卫1间</option><option>独卫2间</option><option>共用</option></select>
       </div>
       <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_bath_sc" id="s_bath_sc" placeholder="-"></div>
@@ -601,6 +603,47 @@ textarea.notes:focus{outline:none;border-color:#378ADD}
         <input class="write write-wide" id="s_ret_note" placeholder="其他约定...">
       </div>
       <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_ret_sc" id="s_ret_sc" placeholder="-"></div>
+    </div>
+  </div>
+
+  <!-- ===== Section 7: 停车与充电 ===== -->
+  <div class="section" data-print-name="停车与充电">
+    <div class="section-title"><span class="sec-num">7</span>停车与充电</div>
+    <div class="item-row">
+      <div class="item-label">电动车停放</div>
+      <div class="item-content">
+        <select class="sel" id="s_ev_park"><option value="">停放方式</option><option>小区内专用棚</option><option>楼栋入口处</option><option>小区外路边</option><option>无处停放</option></select>
+        <label class="ck"><input type="checkbox" id="s_ev_park_cover"> 有遮雨棚</label>
+        <label class="ck"><input type="checkbox" id="s_ev_park_safe"> 有点位/锁扣</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_ev_park_sc" id="s_ev_park_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">电动车充电</div>
+      <div class="item-content">
+        <select class="sel" id="s_ev_charge"><option value="">充电条件</option><option>小区内充电桩</option><option>楼内充电口</option><option>附近充电站</option><option>只能入户充电</option><option>无法充电</option></select>
+        <span class="write-lbl">费用</span><input class="write write-narrow" id="s_ev_charge_fee" type="number" placeholder="--">
+        <span class="write-lbl">元/次</span>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_ev_charge_sc" id="s_ev_charge_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">汽车/自驾</div>
+      <div class="item-content">
+        <select class="sel" id="s_car_park"><option value="">车位情况</option><option>有固定车位</option><option>有临时车位</option><option>路边可停</option><option>周边停车场</option><option>完全无车位</option></select>
+        <span class="write-lbl">车位费</span><input class="write write-narrow" id="s_car_park_fee" type="number" placeholder="--">
+        <span class="write-lbl">元/月</span>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_car_park_sc" id="s_car_park_sc" placeholder="-"></div>
+    </div>
+    <div class="item-row">
+      <div class="item-label">自行车停放</div>
+      <div class="item-content">
+        <label class="ck"><input type="checkbox" id="s_bike_rack"> 有车棚/车架</label>
+        <label class="ck"><input type="checkbox" id="s_bike_safe"> 可上锁</label>
+        <label class="ck"><input type="checkbox" id="s_bike_elev"> 可进电梯</label>
+      </div>
+      <div class="item-score"><input class="score-input" type="number" min="1" max="5" data-key="s_bike_sc" id="s_bike_sc" placeholder="-"></div>
     </div>
   </div>
 
@@ -876,6 +919,9 @@ const autoScoreRules = {
     { triggers: [{id:'s_bath_window', op:'checked'},{id:'s_bath_count', op:'eq', val:'独卫1间'}], score:4, desc:'有窗+独卫' },
     { triggers: [{id:'s_bath_dry', op:'checked'}], score:4, desc:'干湿分离' },
     { triggers: [{id:'s_bath_count', op:'eq', val:'共用'}], score:2, desc:'共用卫生间' },
+    { triggers: [{id:'s_bath_nowin', op:'checked'},{id:'s_bath_nodry', op:'checked'}], score:1, desc:'无窗+不干湿分离', penalty:true },
+    { triggers: [{id:'s_bath_nowin', op:'checked'}], score:2, desc:'无窗暗卫', penalty:true },
+    { triggers: [{id:'s_bath_nodry', op:'checked'}], score:3, desc:'不干湿分离', penalty:true },
   ],
   's_store_sc': [
     { triggers: [{id:'s_closet', op:'checked'},{id:'s_storage', op:'checked'}], score:5, desc:'衣柜+储物间' },
@@ -914,6 +960,36 @@ const autoScoreRules = {
     { triggers: [{id:'s_ret_normal', op:'checked'},{id:'s_ret_clean', op:'checked'}], score:4, desc:'正常损耗不扣+提前通知' },
     { triggers: [{id:'s_ret_normal', op:'checked'}], score:4, desc:'正常损耗不扣押金' },
     { triggers: [{id:'s_ret_trans', op:'checked'}], score:4, desc:'可转租' },
+  ],
+  // ---- 停车与充电 ----
+  's_ev_park_sc': [
+    { triggers: [{id:'s_ev_park', op:'eq', val:'小区内专用棚'},{id:'s_ev_park_cover', op:'checked'},{id:'s_ev_park_safe', op:'checked'}], score:5, desc:'专用棚+遮雨+锁扣' },
+    { triggers: [{id:'s_ev_park', op:'eq', val:'小区内专用棚'},{id:'s_ev_park_cover', op:'checked'}], score:4, desc:'专用棚+遮雨' },
+    { triggers: [{id:'s_ev_park', op:'eq', val:'小区内专用棚'}], score:4, desc:'小区内专用棚' },
+    { triggers: [{id:'s_ev_park', op:'eq', val:'楼栋入口处'}], score:3, desc:'楼栋入口处' },
+    { triggers: [{id:'s_ev_park', op:'eq', val:'小区外路边'}], score:2, desc:'小区外路边', penalty:true },
+    { triggers: [{id:'s_ev_park', op:'eq', val:'无处停放'}], score:1, desc:'无处停放', penalty:true },
+  ],
+  's_ev_charge_sc': [
+    { triggers: [{id:'s_ev_charge', op:'eq', val:'小区内充电桩'}], score:5, desc:'小区内充电桩' },
+    { triggers: [{id:'s_ev_charge', op:'eq', val:'楼内充电口'}], score:4, desc:'楼内充电口' },
+    { triggers: [{id:'s_ev_charge', op:'eq', val:'附近充电站'}], score:3, desc:'附近充电站' },
+    { triggers: [{id:'s_ev_charge', op:'eq', val:'只能入户充电'}], score:2, desc:'只能入户充电（有隐患）', penalty:true },
+    { triggers: [{id:'s_ev_charge', op:'eq', val:'无法充电'}], score:1, desc:'无法充电', penalty:true },
+  ],
+  's_car_park_sc': [
+    { triggers: [{id:'s_car_park', op:'eq', val:'有固定车位'}], score:5, desc:'有固定车位' },
+    { triggers: [{id:'s_car_park', op:'eq', val:'有临时车位'}], score:4, desc:'有临时车位' },
+    { triggers: [{id:'s_car_park', op:'eq', val:'路边可停'}], score:3, desc:'路边可停' },
+    { triggers: [{id:'s_car_park', op:'eq', val:'周边停车场'}], score:3, desc:'周边停车场' },
+    { triggers: [{id:'s_car_park', op:'eq', val:'完全无车位'}], score:1, desc:'完全无车位', penalty:true },
+  ],
+  's_bike_sc': [
+    { triggers: [{id:'s_bike_rack', op:'checked'},{id:'s_bike_safe', op:'checked'},{id:'s_bike_elev', op:'checked'}], score:5, desc:'车棚+可上锁+可进电梯' },
+    { triggers: [{id:'s_bike_rack', op:'checked'},{id:'s_bike_safe', op:'checked'}], score:4, desc:'车棚+可上锁' },
+    { triggers: [{id:'s_bike_rack', op:'checked'}], score:3, desc:'有车棚' },
+    { triggers: [{id:'s_bike_safe', op:'checked'}], score:3, desc:'可上锁' },
+    { triggers: [{id:'s_bike_elev', op:'checked'}], score:3, desc:'可进电梯' },
   ],
 };
 
@@ -1142,7 +1218,8 @@ function generateConclusion() {
     's_dir_sc,s_noise_sc,s_sound_sc,s_wind_sc': {name:'🏠 房屋环境', icon:'🏠'},
     's_water_safe_sc,s_elec_safe_sc,s_pest_sc,s_lock_sc': {name:'🔒 安全检查', icon:'🔒'},
     's_hw_sc,s_signal_sc,s_ac_sc,s_furn_sc,s_bath_sc,s_store_sc': {name:'🛋️ 设施舒适', icon:'🛋️'},
-    's_prop_sc,s_inc_sc,s_bill_sc,s_ll_sc,s_ret_sc': {name:'📝 物业合同', icon:'📝'}
+    's_prop_sc,s_inc_sc,s_bill_sc,s_ll_sc,s_ret_sc': {name:'📝 物业合同', icon:'📝'},
+    's_ev_park_sc,s_ev_charge_sc,s_car_park_sc,s_bike_sc': {name:'🅿️ 停车充电', icon:'🅿️'}
   };
 
   let strengths = [], weaknesses = [];
@@ -1614,7 +1691,7 @@ function saveRecord(){
       s_hw:getVal('s_hw'),s_hw_vol:getVal('s_hw_vol'),s_hw_time:getVal('s_hw_time'),
       s_signal:getVal('s_signal'),
       s_ac:getCK('s_ac'),s_ac_count:getVal('s_ac_count'),s_heat:getVal('s_heat'),
-      s_bath_window:getCK('s_bath_window'),s_bath_dry:getCK('s_bath_dry'),s_bath_count:getVal('s_bath_count'),
+      s_bath_window:getCK('s_bath_window'),s_bath_nowin:getCK('s_bath_nowin'),s_bath_dry:getCK('s_bath_dry'),s_bath_nodry:getCK('s_bath_nodry'),s_bath_count:getVal('s_bath_count'),
       s_closet:getCK('s_closet'),s_storage:getCK('s_storage'),
       fur_fridge:getCK('fur_fridge'),fur_washer:getCK('fur_washer'),fur_tv:getCK('fur_tv'),fur_microwave:getCK('fur_microwave'),fur_oven:getCK('fur_oven'),fur_purifier:getCK('fur_purifier'),fur_aclean:getCK('fur_aclean'),fur_dryer:getCK('fur_dryer'),
       fur_stove:getCK('fur_stove'),fur_hood:getCK('fur_hood'),fur_rice:getCK('fur_rice'),fur_kettle:getCK('fur_kettle'),
@@ -1625,6 +1702,10 @@ function saveRecord(){
       s_bill:getVal('s_bill'),s_bill_check:getCK('s_bill_check'),
       s_ll_easy:getCK('s_ll_easy'),s_ll_visit:getCK('s_ll_visit'),s_ll_repair:getCK('s_ll_repair'),s_ll_photo:getCK('s_ll_photo'),
       s_ret_normal:getCK('s_ret_normal'),s_ret_clean:getCK('s_ret_clean'),s_ret_trans:getCK('s_ret_trans'),s_ret_note:getVal('s_ret_note'),
+      s_ev_park:getVal('s_ev_park'),s_ev_park_cover:getCK('s_ev_park_cover'),s_ev_park_safe:getCK('s_ev_park_safe'),
+      s_ev_charge:getVal('s_ev_charge'),s_ev_charge_fee:getVal('s_ev_charge_fee'),
+      s_car_park:getVal('s_car_park'),s_car_park_fee:getVal('s_car_park_fee'),
+      s_bike_rack:getCK('s_bike_rack'),s_bike_safe:getCK('s_bike_safe'),s_bike_elev:getCK('s_bike_elev'),
     }
   };
 
@@ -1742,6 +1823,14 @@ function renderRecordsList(){
         ${f.s_prop?'<div><strong>物业：</strong>'+f.s_prop+(f.s_prop_fee?' '+f.s_prop_fee+'元/月':'')+'</div>':''}
         ${f.s_inc_prop||f.s_inc_net?'<div><strong>杂费：</strong>'+(f.s_inc_prop==='包含在租金'?'物业含租内':'物业'+f.s_inc_prop)+' / '+(f.s_inc_net==='包含在租金'?'宽带含租内':'宽带'+f.s_inc_net)+(f.s_inc_extra?' · 月杂费约'+f.s_inc_extra+'元':'')+'</div>':''}
         ${f.s_lock?'<div><strong>门锁：</strong>'+f.s_lock+(f.s_intercom?' · 有门禁':'')+'</div>':''}
+        ${(()=>{
+          let parking=[];
+          if(f.s_ev_park) parking.push('电动车'+f.s_ev_park+(f.s_ev_park_cover?' 有棚':'')+(f.s_ev_park_safe?' 可锁':''));
+          if(f.s_ev_charge) parking.push('充电'+f.s_ev_charge+(f.s_ev_charge_fee?' '+f.s_ev_charge_fee+'元/次':''));
+          if(f.s_car_park) parking.push('汽车'+f.s_car_park+(f.s_car_park_fee?' '+f.s_car_park_fee+'元/月':''));
+          if(f.s_bike_rack||f.s_bike_safe) parking.push('自行车'+(f.s_bike_rack?' 有车棚':'')+(f.s_bike_safe?' 可锁':''));
+          return parking.length?'<div><strong>停车充电：</strong>'+parking.join(' / ')+'</div>':'';
+        })()}
         ${(()=>{
           const furnNames={fur_fridge:'冰箱',fur_washer:'洗衣机',fur_tv:'电视',fur_microwave:'微波炉',fur_oven:'烤箱',fur_purifier:'净水器',fur_aclean:'空气净化器',fur_dryer:'烘干机',fur_stove:'燃气灶',fur_hood:'抽油烟机',fur_rice:'电饭煲',fur_kettle:'烧水壶',fur_bed:'床',fur_mattress:'床垫',fur_sofa:'沙发',fur_desk:'书桌',fur_chair:'椅子',fur_wardrobe:'衣柜',fur_shoe:'鞋柜',fur_cabinet:'储物柜',fur_curtain:'窗帘',fur_mirror:'镜子',fur_wifi:'WiFi',fur_iron:'熨斗',fur_vacuum:'吸尘器',fur_apt:'智能门锁',fur_balcony:'晾衣架',fur_exhaust:'排气扇'};
           const items=Object.keys(furnNames).filter(k=>f[k]);
@@ -2088,7 +2177,7 @@ function collectFormData() {
       s_hw:getVal('s_hw'),s_hw_vol:getVal('s_hw_vol'),s_hw_time:getVal('s_hw_time'),
       s_signal:getVal('s_signal'),
       s_ac:getCK('s_ac'),s_ac_count:getVal('s_ac_count'),s_heat:getVal('s_heat'),
-      s_bath_window:getCK('s_bath_window'),s_bath_dry:getCK('s_bath_dry'),s_bath_count:getVal('s_bath_count'),
+      s_bath_window:getCK('s_bath_window'),s_bath_nowin:getCK('s_bath_nowin'),s_bath_dry:getCK('s_bath_dry'),s_bath_nodry:getCK('s_bath_nodry'),s_bath_count:getVal('s_bath_count'),
       s_closet:getCK('s_closet'),s_storage:getCK('s_storage'),
       fur_fridge:getCK('fur_fridge'),fur_washer:getCK('fur_washer'),fur_tv:getCK('fur_tv'),fur_microwave:getCK('fur_microwave'),fur_oven:getCK('fur_oven'),fur_purifier:getCK('fur_purifier'),fur_aclean:getCK('fur_aclean'),fur_dryer:getCK('fur_dryer'),
       fur_stove:getCK('fur_stove'),fur_hood:getCK('fur_hood'),fur_rice:getCK('fur_rice'),fur_kettle:getCK('fur_kettle'),
@@ -2099,6 +2188,10 @@ function collectFormData() {
       s_bill:getVal('s_bill'),s_bill_check:getCK('s_bill_check'),
       s_ll_easy:getCK('s_ll_easy'),s_ll_visit:getCK('s_ll_visit'),s_ll_repair:getCK('s_ll_repair'),s_ll_photo:getCK('s_ll_photo'),
       s_ret_normal:getCK('s_ret_normal'),s_ret_clean:getCK('s_ret_clean'),s_ret_trans:getCK('s_ret_trans'),s_ret_note:getVal('s_ret_note'),
+      s_ev_park:getVal('s_ev_park'),s_ev_park_cover:getCK('s_ev_park_cover'),s_ev_park_safe:getCK('s_ev_park_safe'),
+      s_ev_charge:getVal('s_ev_charge'),s_ev_charge_fee:getVal('s_ev_charge_fee'),
+      s_car_park:getVal('s_car_park'),s_car_park_fee:getVal('s_car_park_fee'),
+      s_bike_rack:getCK('s_bike_rack'),s_bike_safe:getCK('s_bike_safe'),s_bike_elev:getCK('s_bike_elev'),
     }
   };
   return data;
